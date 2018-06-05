@@ -58,7 +58,16 @@ yarn test
 
 * Events declared on smart contracts should have an named parameter like `NewValueSet(uint _value)` in the contract `SimpleStore.sol`. Also it helps to dealing with events
 
-* Loom Truffle Provider is currently compatible only with Truffle `v4.1.8`. Support for newer versions will be added soon.
+* Loom Truffle Provider is currently compatible only with Truffle `v4.1.8`. Support for newer versions will be added soon.
 
 * Only one account is available for testing and deployment, the one associated with the private key.
 
+Loom Network
+----
+[https://loomx.io](https://loomx.io)
+
+
+License
+----
+
+BSD 3-Clause License
