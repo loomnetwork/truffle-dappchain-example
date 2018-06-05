@@ -1,0 +1,14 @@
+{
+  "name": "truffle-dappchain-example",
+  "description": "Simple example of Truffle interacting with Loom DappChain",
+  "scripts": {
+    "truffle": "truffle",
+    "deploy:reset": "truffle deploy --reset --network loom_dapp_chain",
+    "deploy": "truffle deploy --network loom_dapp_chain",
+    "test": "truffle test --network loom_dapp_chain"
+  },
+  "dependencies": {
+    "loom-truffle-provider": "^0.1.0",
+    "truffle": "4.1.8"
+  }
+}

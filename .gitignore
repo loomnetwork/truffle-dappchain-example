@@ -1,0 +1,8 @@
+node_modules
+app.db
+chaindata
+genesis.json
+loom
+
+# If you want to versioning build files (and it is recommended) you should remove or comment the line below
+build
