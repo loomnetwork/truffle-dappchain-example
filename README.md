@@ -1,6 +1,6 @@
 # Truffle DappChain Example
 
-Simple example of Truffle interacting with Loom DappChain, this example uses [loom-truffle-provider](https://github.com/loomnetwork/loom-truffle-provider)
+Simple example of Truffle interacting with Loom DappChain, this example uses [loom-truffle-provider](https://github.com/loomnetwork/loom-truffle-provider) (check LoomTruffleProvider repository for more details)
 
 ## Requirements
 
@@ -28,7 +28,7 @@ npm install
 
 ```bash
 # Download
-wget https://storage.googleapis.com/private.delegatecall.com/loom/osx/build-155/loom
+wget https://storage.googleapis.com/private.delegatecall.com/loom/osx/build-161/loom
 chmod +x loom
 
 # Run
@@ -42,7 +42,7 @@ chmod +x loom
 # On second terminal
 
 # Deploy Migrations.sol and SimpleStore.sol
-yarn deploy 
+yarn deploy
 
 # Running test on directory /test
 yarn test
@@ -59,8 +59,6 @@ yarn test
 * Events declared on smart contracts should have an named parameter like `NewValueSet(uint _value)` in the contract `SimpleStore.sol`. Also it helps to dealing with events
 
 * Loom Truffle Provider is currently compatible only with Truffle `v4.1.8`. Support for newer versions will be added soon.
-
-* Only one account is available for testing and deployment, the one associated with the private key.
 
 Loom Network
 ----

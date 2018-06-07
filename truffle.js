@@ -7,18 +7,13 @@ const readUrl    = 'ws://127.0.0.1:9999/queryws'
 const privateKey = readFileSync('./private_key', 'utf-8')
 
 const loomTruffleProvider = new LoomTruffleProvider(chainId, writeUrl, readUrl, privateKey)
+loomTruffleProvider.createExtraAccounts(10)
 
 module.exports = {
   networks: {
     loom_dapp_chain: {
-      provider: function() {
-        return loomTruffleProvider
-      }, network_id: '*'
-    },
-    development: {
-      host: 'localhost',
-      port: '8545',
+      provider: loomTruffleProvider,
       network_id: '*'
-    },
+    }
   }
 }

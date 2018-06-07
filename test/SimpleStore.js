@@ -15,6 +15,9 @@ contract('SimpleStore', (accounts) => {
     const newValue = 1
     const tx = await simpleStore.set(newValue, {from: accounts[0]})
     assert.equal(tx.logs[0].args._value.toNumber(), newValue)
-    assert.equal((await simpleStore.get.call()).toNumber(), newValue)
+
+    const result = await simpleStore.get.call({from: accounts[1]})
+    assert.equal(result[0], newValue)
+    assert.equal(result[1], accounts[1])
   })
 })

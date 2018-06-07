@@ -8,7 +8,7 @@
     "test": "truffle test --network loom_dapp_chain"
   },
   "dependencies": {
-    "loom-truffle-provider": "^0.1.0",
+    "loom-truffle-provider": "^0.1.1",
     "truffle": "4.1.8"
   }
 }
