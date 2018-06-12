@@ -10,8 +10,9 @@ Node >= 8
 
 ## Install
 
-Download the Truffle DappChain Example
+In order to download the Truffle DAppChain Example there're two methods Git or Unbox
 
+### Git method
 ```bash
 git clone https://github.com/loomnetwork/truffle-dappchain-example
 ```
@@ -22,6 +23,17 @@ cd truffle-dappchain-example
 yarn install
 # or
 npm install
+```
+
+### Unbox method
+```bash
+# Install Truffle if not installed
+npm install -g truffle
+
+mkdir truffle-dappchain-example
+cd truffle-dappchain-example
+
+truffle unbox loomnetwork/truffle-dappchain-example
 ```
 
 ## Start DappChain

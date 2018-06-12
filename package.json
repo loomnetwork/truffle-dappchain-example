@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "loom-truffle-provider": "^0.2.0",
-    "truffle": "4.1.8"
+    "truffle": "^4.1.11"
   }
 }
