@@ -1,0 +1,14 @@
+{
+  "ignore": [
+    "README.md",
+    ".gitignore"
+  ],
+  "commands": {
+    "Compile contracts": "truffle compile",
+    "Migrate contracts": "truffle migrate --network loom_dapp_chain",
+    "Test contracts": "truffle test --network loom_dapp_chain"
+  },
+  "hooks": {
+    "post-unpack": "npm install "
+  }
+}
