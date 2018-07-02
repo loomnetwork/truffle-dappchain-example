@@ -66,6 +66,19 @@ yarn test
 
 > We're not versioning the build directory for this particular example, although is recommended to versioning, the limitation can be removed by editing .gitignore
 
+## Web interface
+
+The web interface is build with React using webpack to compile and generate the page
+
+```bash
+
+# On a third terminal
+
+yarn serve
+```
+
+The eb interface will be available on http://localhost:8080
+
 ## Current limitations
 
 * Events declared on smart contracts should have an named parameter like `NewValueSet(uint _value)` in the contract `SimpleStore.sol`. Also it helps to dealing with events
