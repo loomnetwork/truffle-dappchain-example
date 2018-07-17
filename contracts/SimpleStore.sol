@@ -1,16 +1,16 @@
 pragma solidity ^0.4.22;
 
 contract SimpleStore {
-  uint value;
+  uint256 value;
 
-  event NewValueSet(uint _value, address _sender);
+  event NewValueSet(uint256 indexed _value, address _sender);
 
-  function set(uint _value) public {
+  function set(uint256 _value) public {
     value = _value;
     emit NewValueSet(value, msg.sender);
   }
 
-  function get() public view returns (uint, address) {
+  function get() public view returns (uint256, address) {
     return (value, msg.sender);
   }
 }

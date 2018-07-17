@@ -46,7 +46,7 @@ const Index = class Index extends React.Component {
           <button type="button" disabled={!this.state.isValid} className="btn btn-primary" onClick={() => this.confirmValue()}>Confirm</button>
         </form>
         <div className="alert alert-success">
-          Value set is {this.state.value}
+          Value set is {this.state.value} (this value only updates if values is 10)
         </div>
         <hr />
         <pre>

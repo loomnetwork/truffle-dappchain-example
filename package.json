@@ -9,9 +9,9 @@
     "serve": "webpack-dev-server --hot --content-base ./dist"
   },
   "dependencies": {
-    "loom-js": "^1.9.0",
-    "loom-truffle-provider": "^0.3.0",
-    "truffle": "^4.1.12"
+    "loom-js": "^1.14.0",
+    "loom-truffle-provider": "^0.4.0",
+    "truffle": "^4.1.13"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

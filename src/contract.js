@@ -50,7 +50,7 @@ export default class Contract {
       from: this.currentUserAddress
     })
 
-    this.simpleStoreInstance.events.NewValueSet({}, (err, event) => {
+    this.simpleStoreInstance.events.NewValueSet({ filter: { _value: 10 }}, (err, event) => {
       if (err) console.error('Error on event', err)
       else {
         if (this.onEvent) {
