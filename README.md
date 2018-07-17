@@ -2,7 +2,7 @@
 
 Simple example of Truffle interacting with Loom DappChain, this example uses [loom-truffle-provider](https://github.com/loomnetwork/loom-truffle-provider) (check LoomTruffleProvider repository for more details)
 
-![](https://dzwonsemrish7.cloudfront.net/items/251c1m0n0W3H383B3x2H/Screen%20Recording%202018-07-02%20at%2008.23%20PM.gif?v=0b57c583)
+![](https://dzwonsemrish7.cloudfront.net/items/0a1N05043p1Y1G3K1Y2L/Screen%20Recording%202018-07-17%20at%2011.26%20AM.gif?v=df873ac3)
 
 
 ## Requirements
