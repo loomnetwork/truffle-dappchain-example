@@ -6,13 +6,17 @@ const Index = class Index extends React.Component {
   constructor(props) {
     super(props)
 
+    this.textInput = React.createRef();
+
     this.contract = new Contract()
     this.value = 0
 
     this.state = {
       value: 0,
       isValid: false,
-      tx: null
+      isSending: false,
+      tx: null,
+      tries: 0
     }
   }
 
@@ -30,24 +34,39 @@ const Index = class Index extends React.Component {
   }
 
   async confirmValue() {
-    const tx = await this.contract.setValue(this.value)
-    this.setState({ tx })
+    this.setState({isSending: true})
+    try {
+      const tx = await this.contract.setValue(this.value)
+      const tries = this.state.tries + 1
+      this.textInput.current.value = ''
+      this.setState({ tx, tries, isValid: false })
+    } catch (err) {
+      console.error('Ops, some error happen:', err)
+    }
+    this.setState({isSending: false})
   }
 
   render() {
+    const loomyAlert = (
+      <div className="alert alert-warning">
+        I dare you to type 47 and press Confirm !
+      </div>
+    )
+
     return (
       <div className="container" style={{ marginTop: 10 }}>
-        <form>
+        <form onSubmit={e => { e.preventDefault(); }}>
           <div className="form-group">
             <label>Value</label>
-            <input type="number" className="form-control" onChange={(event) => this.onChangeHandler(event)} />
+            <input type="number" className="form-control" onChange={(event) => this.onChangeHandler(event)} ref={this.textInput}/>
             <small className="form-text text-muted">Set a number</small>
           </div>
-          <button type="button" disabled={!this.state.isValid} className="btn btn-primary" onClick={() => this.confirmValue()}>Confirm</button>
+          <button type="button" disabled={!this.state.isValid || this.state.isSending} className="btn btn-primary" onClick={() => this.confirmValue()}>Confirm</button>
         </form>
         <div className="alert alert-success">
-          Value set is {this.state.value} (this value only updates if values is 10)
+          Value set is {this.state.value} (this value only updates if values is 10 or ...)
         </div>
+        { this.state.tries === 3 && loomyAlert }
         <hr />
         <pre>
           {this.state.tx && JSON.stringify(this.state.tx, null, 2)}

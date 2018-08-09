@@ -58,6 +58,16 @@ export default class Contract {
         }
       }
     })
+
+    this.simpleStoreInstance.events.NewValueSetAgain({ filter: { _value: 47 }}, (err, event) => {
+      if (err) console.error('Error on event', err)
+      else {
+        setTimeout(() => alert("Loooomy help me :)"))
+        if (this.onEvent) {
+          this.onEvent(event.returnValues)
+        }
+      }
+    })
   }
 
   addEventListener(fn) {
@@ -69,6 +79,13 @@ export default class Contract {
   }
 
   async setValue(value) {
+    // Just a small test with Loomy
+    if (value == 47) {
+      return await this.simpleStoreInstance.methods.setAgain(value).send({
+        from: this.currentUserAddress
+      })
+    }
+
     return await this.simpleStoreInstance.methods.set(value).send({
       from: this.currentUserAddress
     })

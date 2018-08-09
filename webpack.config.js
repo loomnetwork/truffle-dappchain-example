@@ -1,21 +1,23 @@
 const webpack = require('webpack')
 
 module.exports = {
-  context: __dirname + "/src",
-  entry: [
-    "regenerator-runtime/runtime",
-    "./index"
-  ],
+  context: __dirname + '/src',
+  entry: ['regenerator-runtime/runtime', './index'],
   output: {
-    path: __dirname + "/dist",
-    filename: "bundle.js"
+    path: __dirname + '/dist',
+    filename: 'bundle.js'
+  },
+  devServer: {
+    historyApiFallback: true
   },
   module: {
-    rules: [{
-      test: /\.js$/,
-      exclude: /node_modules/,
-      loader: 'babel-loader'
-    }]
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'babel-loader'
+      }
+    ]
   },
   plugins: [
     new webpack.DefinePlugin({
