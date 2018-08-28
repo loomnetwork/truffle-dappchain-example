@@ -80,7 +80,7 @@ The web interface is build with React using webpack to compile and generate the 
 yarn serve
 ```
 
-The eb interface will be available on http://localhost:8080
+The web interface will be available on http://localhost:8080
 
 ## Current limitations
 
