@@ -8,7 +8,7 @@ const readUrl = 'http://127.0.0.1:46658/query'
 const privateKey = readFileSync('./private_key', 'utf-8')
 
 const loomTruffleProvider = new LoomTruffleProvider(chainId, writeUrl, readUrl, privateKey)
-loomTruffleProvider.createExtraAccounts(10)
+loomTruffleProvider.createExtraAccountsFromMnemonic("gravity top burden flip student usage spell purchase hundred improve check genre", 10)
 
 module.exports = {
   contracts_build_directory: join(__dirname, './src/contracts'),
