@@ -4571,9 +4571,9 @@ long@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/long/-/long-3.2.0.tgz#d821b7138ca1cb581c172990ef14db200b5c474b"
 
-loom-js@^1.20.0:
-  version "1.20.0"
-  resolved "https://registry.yarnpkg.com/loom-js/-/loom-js-1.20.0.tgz#b87f8933358e10230226d679620963459844481b"
+loom-js@^1.22.0:
+  version "1.22.0"
+  resolved "https://registry.yarnpkg.com/loom-js/-/loom-js-1.22.0.tgz#7211c844d20d7b4a39295ad13a20c1845e6beff1"
   dependencies:
     axios "^0.18.0"
     bn.js "^4.11.8"
@@ -4588,14 +4588,14 @@ loom-js@^1.20.0:
     tweetnacl "^1.0.0"
     web3 "^1.0.0-beta.34"
 
-loom-truffle-provider@^0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/loom-truffle-provider/-/loom-truffle-provider-0.6.0.tgz#f76dcfa6d3ca9267fa6ebc41ff6f1049651e009a"
+loom-truffle-provider@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/loom-truffle-provider/-/loom-truffle-provider-0.7.0.tgz#cfd249903a829e08cee97cdaa07535e0035f6b55"
   dependencies:
     bip39 "^2.5.0"
     bn.js "^4.11.8"
     ed25519-hd-key "^1.0.0"
-    loom-js "^1.20.0"
+    loom-js "^1.22.0"
 
 loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.3.1:
   version "1.3.1"
