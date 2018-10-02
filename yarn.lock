@@ -4588,6 +4588,24 @@ loom-js@^1.20.0:
     tweetnacl "^1.0.0"
     web3 "^1.0.0-beta.34"
 
+loom-js@^1.25.0:
+  version "1.25.0"
+  resolved "https://registry.yarnpkg.com/loom-js/-/loom-js-1.25.0.tgz#63c66daec1e795e09e9401c7b259bc6c2b4d7496"
+  dependencies:
+    axios "^0.18.0"
+    bn.js "^4.11.8"
+    crypto-browserify "^3.12.0"
+    debug "^3.1.0"
+    ethereumjs-util "^5.2.0"
+    google-protobuf "3.6"
+    retry "^0.12.0"
+    ripemd160 "^2.0.1"
+    rlp "^2.1.0"
+    rpc-websockets "^4.1.1"
+    tslib "^1.9.3"
+    tweetnacl "^1.0.0"
+    web3 "^1.0.0-beta.34"
+
 loom-truffle-provider@^0.6.0:
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/loom-truffle-provider/-/loom-truffle-provider-0.6.0.tgz#f76dcfa6d3ca9267fa6ebc41ff6f1049651e009a"
