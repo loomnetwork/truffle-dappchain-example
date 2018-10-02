@@ -9,7 +9,7 @@
     "serve": "webpack-dev-server --hot --content-base ./dist"
   },
   "dependencies": {
-    "loom-js": "^1.20.0",
+    "loom-js": "^1.25.0",
     "loom-truffle-provider": "^0.6.0",
     "truffle": "^4.1.14"
   },
