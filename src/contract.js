@@ -18,7 +18,7 @@ export default class Contract {
     this.privateKey = CryptoUtils.generatePrivateKey()
     this.publicKey = CryptoUtils.publicKeyFromPrivateKey(this.privateKey)
     this.client = new Client(
-      'default',
+      '474747',
       'ws://127.0.0.1:46658/websocket',
       'ws://127.0.0.1:46658/queryws',
     )
