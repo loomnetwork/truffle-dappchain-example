@@ -1,12 +1,13 @@
-const fs = require('fs')
-const path = require('path')
-
 const MyToken = artifacts.require('./MyToken.sol')
 const MyCoin = artifacts.require('./MyCoin.sol')
 
-const gatewayAddress = '0x6f7Eb868b2236638c563af71612c9701AC30A388'
+const gatewayAddress = '0xE754d9518bF4a9C63476891eF9Aa7D91c8236a5d'
 
 module.exports = function (deployer, network, accounts) {
+  if (network === 'rinkeby') {
+    return
+  }
+
   deployer.then(async () => {
     await deployer.deploy(MyToken, gatewayAddress)
     const myTokenInstance = await MyToken.deployed()
