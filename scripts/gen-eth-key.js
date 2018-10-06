@@ -28,5 +28,6 @@ const wallet_hdpath = "m/44'/60'/0'/0/"
 
 const wallet = hdwallet.derivePath(wallet_hdpath + '0').getWallet()
 
+fs.writeFileSync(path.join(__dirname, `../${prefix}_account`), '0x' + wallet.getAddress().toString('hex'))
 fs.writeFileSync(path.join(__dirname, `../${prefix}_mnemonic`), mnemonic)
 fs.writeFileSync(path.join(__dirname, `../${prefix}_private_key`), wallet.getPrivateKey().toString('hex'))
