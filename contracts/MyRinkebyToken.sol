@@ -10,4 +10,9 @@ contract MyRinkebyToken is ERC721Token {
     {
         _mint(msg.sender, _uid);
     }
+
+    // Convenience function to get around crappy function overload limitations in Web3
+    function depositToGateway(address _gateway, uint256 _uid) public {
+        safeTransferFrom(msg.sender, _gateway, _uid);
+    }
 }
