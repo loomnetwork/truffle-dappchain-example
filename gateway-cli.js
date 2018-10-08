@@ -4,8 +4,10 @@ const fs = require('fs')
 const path = require('path')
 const {
     Client, NonceTxMiddleware, SignedTxMiddleware, Address, LocalAddress, CryptoUtils, LoomProvider,
-    Contracts
+    Contracts, Web3Signer, soliditySha3
 } = require('loom-js')
+// TODO: fix this export in loom-js
+const { OfflineWeb3Signer } = require('loom-js/dist/solidity-helpers')
 const BN = require('bn.js')
 
 const MyRinkebyTokenJSON = require('./src/contracts/MyRinkebyToken.json')
@@ -15,6 +17,7 @@ const MyCoinJSON = require('./src/contracts/MyCoin.json')
 const RinkebyGatewayJSON = require('./src/Gateway.json')
 
 const TransferGateway = Contracts.TransferGateway
+const AddressMapper = Contracts.AddressMapper
 
 // See https://loomx.io/developers/docs/en/testnet-plasma.html#contract-addresses-transfer-gateway
 // for the most up to date address.
@@ -297,7 +300,7 @@ function loadRinkeyAccount() {
   const web3js = new Web3(`https://rinkeby.infura.io/${process.env.INFURA_API_KEY}`)
   const ownerAccount = web3js.eth.accounts.privateKeyToAccount('0x' + privateKey)
   web3js.eth.accounts.wallet.add(ownerAccount)
-  return { account: ownerAccount.address, web3js }
+  return { account: ownerAccount, web3js }
 }
 
 function loadExtdevAccount() {
@@ -324,6 +327,52 @@ function loadExtdevAccount() {
   }
 }
 
+async function mapContracts({
+  client,
+  signer,
+  tokenRinkebyAddress,
+  tokenExtdevAddress,
+  ownerExtdevAddress,
+  rinkebyTxHash
+}) {
+  const ownerExtdevAddr = Address.fromString(`${client.chainId}:${ownerExtdevAddress}`)
+  const gatewayContract = await TransferGateway.createAsync(client, ownerExtdevAddr)
+  const foreignContract = Address.fromString(`eth:${tokenRinkebyAddress}`)
+  const localContract = Address.fromString(`${client.chainId}:${tokenExtdevAddress}`)
+  
+  const hash = soliditySha3(
+    { type: 'address', value: tokenRinkebyAddress.slice(2) },
+    { type: 'address', value: tokenExtdevAddress.slice(2) }
+  )
+
+  const foreignContractCreatorSig = await signer.signAsync(hash)
+  const foreignContractCreatorTxHash = Buffer.from(rinkebyTxHash.slice(2), 'hex')
+
+  await gatewayContract.addContractMappingAsync({
+    localContract,
+    foreignContract,
+    foreignContractCreatorSig,
+    foreignContractCreatorTxHash
+  })
+}
+
+async function mapAccounts({ client, signer, ownerRinkebyAddress, ownerExtdevAddress }) {
+  const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
+  const ownerExtdevAddr = Address.fromString(`${client.chainId}:${ownerExtdevAddress}`)
+  const mapperContract = await AddressMapper.createAsync(client, ownerExtdevAddr)
+  
+  try {
+    const mapping = await mapperContract.getMappingAsync(ownerExtdevAddr)
+    console.log(`${mapping.from.toString()} is already mapped to ${mapping.to.toString()}`)
+    return
+  } catch (err) {
+    // assume this means there is no mapping yet, need to fix loom-js not to throw in this case
+  }
+  console.log(`mapping ${ownerRinkebyAddr.toString()} to ${ownerExtdevAddr.toString()}`)
+  await mapperContract.addIdentityMappingAsync(ownerExtdevAddr, ownerRinkebyAddr, signer)
+  console.log(`Mapped ${ownerExtdevAddr} to ${ownerRinkebyAddr}`)
+}
+
 program
   .command('deposit-coin <amount>')
   .description('deposit the specified amount of ERC20 tokens into the Transfer Gateway')
@@ -332,7 +381,7 @@ program
     const { account, web3js } = loadRinkeyAccount()
     try {
       const tx = await depositCoinToRinkebyGateway(
-        web3js, amount * coinMultiplier, account, options.gas || 350000
+        web3js, amount * coinMultiplier, account.address, options.gas || 350000
       )
       console.log(`${amount} tokens deposited to Ethereum Gateway.`)
       console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
@@ -360,7 +409,7 @@ program
         web3js: extdev.web3js,
         amount: actualAmount,
         ownerExtdevAddress: extdev.account,
-        ownerRinkebyAddress: rinkeby.account,
+        ownerRinkebyAddress: rinkeby.account.address,
         tokenExtdevAddress: MyCoinJSON.networks[extdevChainId].address,
         tokenRinkebyAddress: MyRinkebyCoinJSON.networks[networkId].address,
         timeout: options.timeout ? (options.timeout * 1000) : 120000
@@ -368,7 +417,7 @@ program
       const tx = await withdrawCoinFromRinkebyGateway({
         web3js: rinkeby.web3js,
         amount: actualAmount,
-        accountAddress: rinkeby.account,
+        accountAddress: rinkeby.account.address,
         signature,
         gas: options.gas || 350000
       })
@@ -401,7 +450,7 @@ program
         web3js: extdev.web3js,
         tokenId: uid,
         ownerExtdevAddress: extdev.account,
-        ownerRinkebyAddress: rinkeby.account,
+        ownerRinkebyAddress: rinkeby.account.address,
         tokenExtdevAddress: MyTokenJSON.networks[extdevChainId].address,
         tokenRinkebyAddress: MyRinkebyTokenJSON.networks[networkId].address,
         timeout: options.timeout ? (options.timeout * 1000) : 120000
@@ -410,7 +459,7 @@ program
       const tx = await withdrawTokenFromRinkebyGateway({
         web3js: rinkeby.web3js,
         tokenId: uid,
-        accountAddress: rinkeby.account,
+        accountAddress: rinkeby.account.address,
         signature,
         gas: options.gas || 350000
       })
@@ -445,7 +494,7 @@ program
         const tx = await withdrawCoinFromRinkebyGateway({
           web3js: rinkeby.web3js,
           amount: receipt.tokenAmount,
-          accountAddress: rinkeby.account,
+          accountAddress: rinkeby.account.address,
           signature,
           gas: options.gas || 350000
         })
@@ -455,7 +504,7 @@ program
         const tx = await withdrawTokenFromRinkebyGateway({
           web3js: rinkeby.web3js,
           tokenId: receipt.tokenId,
-          accountAddress: rinkeby.account,
+          accountAddress: rinkeby.account.address,
           signature,
           gas: options.gas || 350000
         })
@@ -482,7 +531,7 @@ program
       let ownerAddress, balance
       if (options.chain === 'eth') {
         const { account, web3js } = loadRinkeyAccount()
-        ownerAddress = account
+        ownerAddress = account.address
         if (options.account) {
           ownerAddress = (options.account === 'gateway') ? rinkebyGatewayAddress : options.account
         }
@@ -514,7 +563,7 @@ program
   .action(async function(uid, options) {
     const { account, web3js } = loadRinkeyAccount()
     try {
-      const tx = await depositTokenToGateway(web3js, uid, account, options.gas || 350000)
+      const tx = await depositTokenToGateway(web3js, uid, account.address, options.gas || 350000)
       console.log(`Token ${uid} deposited, Rinkeby tx hash: ${tx.transactionHash}`)
     } catch (err) {
       console.error(err)
@@ -528,7 +577,7 @@ program
   .action(async function(uid, options) {
     const { account, web3js } = loadRinkeyAccount()
     try {
-      const tx = await mintToken(web3js, uid, account, options.gas || 350000)
+      const tx = await mintToken(web3js, uid, account.address, options.gas || 350000)
       console.log(`Token ${uid} minted, Rinkeby tx hash: ${tx.transactionHash}`)
     } catch (err) {
       console.error(err)
@@ -545,7 +594,7 @@ program
       let ownerAddress, balance
       if (options.chain === 'eth') {
         const { account, web3js } = loadRinkeyAccount()
-        ownerAddress = account
+        ownerAddress = account.address
         if (options.account) {
           ownerAddress = (options.account === 'gateway') ? rinkebyGatewayAddress : options.account
         }
@@ -570,6 +619,76 @@ program
       }
     } catch (err) {
       console.error(err)
+    }
+  })
+
+program
+  .command('map-contracts <contract-type>')
+  .description('maps contracts')
+  .action(async function(contractType, options) {
+    let client
+    try {
+      const rinkeby = loadRinkeyAccount()
+      const extdev = loadExtdevAccount()
+      client = extdev.client
+      const networkId = await rinkeby.web3js.eth.net.getId()
+
+      let tokenRinkebyAddress, tokenExtdevAddress, rinkebyTxHash
+      if (contractType === 'coin') {
+        tokenRinkebyAddress = MyRinkebyCoinJSON.networks[networkId].address
+        rinkebyTxHash = MyRinkebyCoinJSON.networks[networkId].transactionHash
+        tokenExtdevAddress = MyCoinJSON.networks[extdevChainId].address
+      } else if (contractType === 'token') {
+        tokenRinkebyAddress = MyRinkebyTokenJSON.networks[networkId].address
+        rinkebyTxHash = MyRinkebyTokenJSON.networks[networkId].transactionHash
+        tokenExtdevAddress = MyTokenJSON.networks[extdevChainId].address
+      } else {
+        console.log('Specify which contracts you wish to map, "coin" or "token"')
+        return
+      }
+      
+      const signer = new OfflineWeb3Signer(rinkeby.web3js, rinkeby.account)
+      await mapContracts({
+        client,
+        signer,
+        tokenRinkebyAddress,
+        tokenExtdevAddress,
+        ownerExtdevAddress: extdev.account,
+        rinkebyTxHash
+      })
+      console.log(`Submitted request to map ${tokenExtdevAddress} to ${tokenRinkebyAddress}`)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      if (client) {
+        client.disconnect()
+      }
+    }
+  })
+
+program
+  .command('map-accounts')
+  .description('maps accounts')
+  .action(async function() {
+    let client
+    try {
+      const rinkeby = loadRinkeyAccount()
+      const extdev = loadExtdevAccount()
+      client = extdev.client
+
+      const signer = new OfflineWeb3Signer(rinkeby.web3js, rinkeby.account)
+      await mapAccounts({
+        client,
+        signer,
+        ownerRinkebyAddress: rinkeby.account.address,
+        ownerExtdevAddress: extdev.account
+      })
+    } catch (err) {
+      console.error(err)
+    } finally {
+      if (client) {
+        client.disconnect()
+      }
     }
   })
 
