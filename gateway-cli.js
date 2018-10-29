@@ -1,3 +1,4 @@
+const Tx = require('ethereumjs-tx')
 const Web3 = require('web3')
 const program = require('commander')
 const fs = require('fs')
@@ -18,6 +19,7 @@ const RinkebyGatewayJSON = require('./src/Gateway.json')
 
 const TransferGateway = Contracts.TransferGateway
 const AddressMapper = Contracts.AddressMapper
+const EthCoin = Contracts.EthCoin
 
 // See https://loomx.io/developers/docs/en/testnet-plasma.html#contract-addresses-transfer-gateway
 // for the most up to date address.
@@ -43,6 +45,11 @@ async function getRinkebyCoinBalance(web3js, accountAddress) {
   return balance
 }
 
+async function getRinkebyEthBalance(web3js, accountAddress) {
+  const balance = await web3js.eth.getBalance(accountAddress);
+  return balance
+}
+
 // TODO: add an option to use the approve/depositERC20 flow to demonstrate how to use the Gateway
 // with contracts that don't implement safe transfer.
 async function depositCoinToRinkebyGateway(web3js, amount, ownerAccount, gas) {
@@ -59,6 +66,50 @@ async function depositCoinToRinkebyGateway(web3js, amount, ownerAccount, gas) {
   return contract.methods
     .safeTransferAndCall(rinkebyGatewayAddress, amount)
     .send({ from: ownerAccount, gas: gasEstimate })
+}
+
+async function depositEthToRinkebyGateway(web3js, amount, unit, ownerAccount) {
+  // the address that will send the test transaction
+  const addressFrom = ownerAccount.address
+  const privKey = ownerAccount.privateKey.slice(2)
+
+  // the destination address
+  const addressTo = rinkebyGatewayAddress
+
+  // Signs the given transaction data and sends it. Abstracts some of the details 
+  // of buffering and serializing the transaction for web3.
+  async function sendSigned(txData, cb) {
+    const privateKey = new Buffer(privKey, 'hex')
+    const transaction = new Tx(txData)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+    return await web3js.eth.sendSignedTransaction('0x' + serializedTx, cb)
+  }
+
+  // get the number of transactions sent so far so we can create a fresh nonce
+  const txCount = await web3js.eth.getTransactionCount(addressFrom)
+
+  const nonce = web3js.utils.toHex(txCount);
+  const gasLimit = web3js.utils.toHex(25000)
+  const gasPrice = web3js.utils.toHex(10e9)
+  const value = web3js.utils.toHex(web3js.utils.toWei(amount, unit))
+
+  // construct the transaction data
+  const txData = {
+    nonce,
+    gasLimit,
+    gasPrice, // 10 Gwei
+    to: addressTo,
+    from: addressFrom,
+    value
+  }
+
+  // fire away!
+  return sendSigned(txData, function(err, result) {
+    if (err) return console.log('error', err)
+    console.log('sent', result)
+  })
+  
 }
 
 async function getRinkebyTokenContract(web3js) {
@@ -143,6 +194,13 @@ async function getExtdevCoinBalance(web3js, accountAddress) {
   return balance
 }
 
+async function getExtdevEthBalance(client, accountAddress) {
+  const addr = Address.fromString(`${client.chainId}:${accountAddress}`)
+  const ethCoin = await EthCoin.createAsync(client, addr);
+  const balance = await ethCoin.getBalanceOfAsync(addr);
+  return balance.toString();
+}
+
 async function getExtdevTokenBalance(web3js, accountAddress) {
   const contract = getExtdevTokenContract(web3js)
   const addr = accountAddress.toLowerCase()
@@ -198,6 +256,49 @@ async function depositCoinToExtdevGateway({
   const tokenExtdevAddr = Address.fromString(`${client.chainId}:${tokenExtdevAddress}`)
   await gatewayContract.withdrawERC20Async(amount, tokenExtdevAddr, ownerRinkebyAddr)
   console.log(`${amount.div(coinMultiplier).toString()} tokens deposited to DAppChain Gateway...`)
+
+  const event = await receiveSignedWithdrawalEvent
+  return CryptoUtils.bytesToHexAddr(event.sig)
+}
+
+// Returns a promise that will be resolved with a hex string containing the signature that must
+// be submitted to the Ethereum Gateway to withdraw a eth.
+async function depositEthToExtdevGateway({
+  client, amount,
+  ownerExtdevAddress, ownerRinkebyAddress,
+  timeout
+}) {
+  const ownerExtdevAddr = Address.fromString(`${client.chainId}:${ownerExtdevAddress}`)
+  const gatewayContract = await TransferGateway.createAsync(client, ownerExtdevAddr)
+
+  const ethCoin = await EthCoin.createAsync(client, ownerExtdevAddr);
+  const extdevGatewayAddr = Address.fromString(`${client.chainId}:${extdevGatewayAddress}`)
+  await ethCoin.approveAsync(extdevGatewayAddr, new BN(amount))
+  
+  const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
+  const rinkebyGatewayAddr = Address.fromString(`eth:${rinkebyGatewayAddress}`)
+
+  const receiveSignedWithdrawalEvent = new Promise((resolve, reject) => {
+    let timer = setTimeout(
+      () => reject(new Error('Timeout while waiting for withdrawal to be signed')),
+      timeout
+    )
+    const listener = event => {
+      if (
+        event.tokenContract.toString() === rinkebyGatewayAddr.toString() &&
+        event.tokenOwner.toString() === ownerRinkebyAddr.toString()
+      ) {
+        clearTimeout(timer)
+        timer = null
+        gatewayContract.removeAllListeners(TransferGateway.EVENT_TOKEN_WITHDRAWAL)
+        resolve(event)
+      }
+    }
+    gatewayContract.on(TransferGateway.EVENT_TOKEN_WITHDRAWAL, listener)
+  })
+
+  await gatewayContract.withdrawETHAsync(new BN(amount), rinkebyGatewayAddr, ownerRinkebyAddr)
+  console.log(`${amount.toString()} wei deposited to DAppChain Gateway...`)
 
   const event = await receiveSignedWithdrawalEvent
   return CryptoUtils.bytesToHexAddr(event.sig)
@@ -274,6 +375,23 @@ async function withdrawCoinFromRinkebyGateway({ web3js, amount, accountAddress, 
 
   return gatewayContract.methods
     .withdrawERC20(amount.toString(), signature, MyRinkebyCoinJSON.networks[networkId].address)
+    .send({ from: accountAddress, gas: gasEstimate })
+  
+}
+
+async function withdrawEthFromRinkebyGateway({ web3js, amount, accountAddress, signature, gas }) {
+  const gatewayContract = await getRinkebyGatewayContract(web3js)
+
+  const gasEstimate = await gatewayContract.methods
+    .withdrawETH(amount.toString(), signature)
+    .estimateGas({ from: accountAddress, gas })
+
+  if (gasEstimate == gas) {
+    throw new Error('Not enough enough gas, send more.')
+  }
+
+  return gatewayContract.methods
+    .withdrawETH(amount.toString(), signature)
     .send({ from: accountAddress, gas: gasEstimate })
   
 }
@@ -391,6 +509,29 @@ program
   })
 
 program
+  .command('deposit-eth <amount>')
+  .description('deposit the specified amount of ETH into the Transfer Gateway')
+  .option("-u, --unit <ethUnit>", "eth unit")
+  .action(async function(amount, options) {
+    const { account, web3js } = loadRinkeyAccount()
+    try {
+      let unit = options.unit;
+      if(options.unit == null) {
+        unit = 'wei'
+      }
+      
+      const tx = await depositEthToRinkebyGateway(
+        web3js, amount, unit, account
+      )
+      console.log(`${amount} ${unit} eth deposited to Ethereum Gateway.`)
+      console.log(`Rinkeby tx: `)
+      console.log(tx)
+    } catch (err) {
+      console.error(err)
+    }
+  })
+
+program
   .command('withdraw-coin <amount>')
   .description('withdraw the specified amount of ERC20 tokens via the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
@@ -422,6 +563,52 @@ program
         gas: options.gas || 350000
       })
       console.log(`${amount} tokens withdrawn from Ethereum Gateway.`)
+      console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      if (client) {
+        client.disconnect()
+      }
+    }
+  })
+
+program
+  .command('withdraw-eth <amount>')
+  .description('withdraw the specified amount of  eth via the Transfer Gateway')
+  .option("-g, --gas <number>", "Gas for the tx")
+  .option("-u, --unit <ethUnit>", "eth unit")
+  .option("--timeout <number>", "Number of seconds to wait for withdrawal to be processed")
+  .action(async function(amount, options) {
+    let client
+    let unit = options.unit
+    let amountInEth
+    if(unit == null) {
+      unit = 'wei'
+    }
+    try {
+      const extdev = loadExtdevAccount()
+      const rinkeby = loadRinkeyAccount()
+      client = extdev.client
+
+      const actualAmount = new BN(rinkeby.web3js.utils.toWei(amount, unit))
+
+      const signature = await depositEthToExtdevGateway({
+        client: client,
+        amount: actualAmount,
+        ownerExtdevAddress: extdev.account,
+        ownerRinkebyAddress: rinkeby.account.address,
+        timeout: options.timeout ? (options.timeout * 1000) : 120000
+      })
+      const tx = await withdrawEthFromRinkebyGateway({
+        web3js: rinkeby.web3js,
+        amount: actualAmount,
+        accountAddress: rinkeby.account.address,
+        signature,
+        gas: options.gas || 350000
+      })
+      amountInEth = actualAmount.div(new BN(10).pow(new BN(18))).toString()
+      console.log(`${actualAmount.toString()} wei (${amountInEth} in eth) withdrawn from Ethereum Gateway.`)
       console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
     } catch (err) {
       console.error(err)
@@ -487,6 +674,8 @@ program
 
       const networkId = await rinkeby.web3js.eth.net.getId()
       const myRinkebyCoinAddress = Address.fromString(`eth:${MyRinkebyCoinJSON.networks[networkId].address}`)
+      const myRinkebyTokenAddress = Address.fromString(`eth:${MyRinkebyTokenJSON.networks[networkId].address}`)
+      const myRinkebyGatewayAddress = Address.fromString(`eth:${rinkebyGatewayAddress}`)
       const receipt = await getPendingWithdrawalReceipt(extdev.client, extdev.account)
       const signature = CryptoUtils.bytesToHexAddr(receipt.oracleSignature)
       
@@ -500,7 +689,7 @@ program
         })
         console.log(`${receipt.tokenAmount.div(coinMultiplier).toString()} tokens withdrawn from Etheruem Gateway.`)
         console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
-      } else {
+      } else if(receipt.tokenContract.toString() === myRinkebyTokenAddress.toString()){
         const tx = await withdrawTokenFromRinkebyGateway({
           web3js: rinkeby.web3js,
           tokenId: receipt.tokenId,
@@ -510,6 +699,20 @@ program
         })
         console.log(`Token ${receipt.tokenId.toString()} withdrawn from Ethereum Gateway.`)
         console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
+      } else if(receipt.tokenContract.toString() === myRinkebyGatewayAddress.toString()) {
+        const tx = await withdrawEthFromRinkebyGateway({
+          web3js: rinkeby.web3js,
+          amount: receipt.tokenAmount,
+          accountAddress: rinkeby.account.address,
+          signature,
+          gas: options.gas || 350000
+        })
+        let amountInWei = new BN(receipt.tokenAmount)
+        let amountInEth = amountInWei.div(new BN(10).pow(new BN(18)))
+        console.log(`${amountInWei.toString()} wei (${amountInEth.toString()} in eth) withdrawn from Etheruem Gateway.`)
+        console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
+      } else {
+        console.log("Unsupported asset type!")
       }
     } catch (err) {
       console.error(err)
@@ -551,6 +754,44 @@ program
         }
       }
       console.log(`${ownerAddress} balance is ${new BN(balance).div(coinMultiplier).toString()}`)
+    } catch (err) {
+      console.error(err)
+    }
+  })
+
+program
+  .command('eth-balance')
+  .description('display the current ETH balance for an account')
+  .option('-c, --chain <chain ID>', '"eth" for Rinkeby, "extdev" for PlasmaChain')
+  .option('-a, --account <hex address> | gateway', 'Account address')
+  .action(async function(options) {
+    try {
+      let ownerAddress, balance, balanceInEth
+      if (options.chain === 'eth') {
+        const { account, web3js } = loadRinkeyAccount()
+        ownerAddress = account.address
+        
+        if (options.account) {
+          ownerAddress = (options.account === 'gateway') ? rinkebyGatewayAddress : options.account
+        }
+        balance = await getRinkebyEthBalance(web3js, ownerAddress)
+      } else {
+        const { account, web3js, client } = loadExtdevAccount()
+        ownerAddress = account
+        if (options.account) {
+          ownerAddress = (options.account === 'gateway') ? extdevGatewayAddress : options.account
+        }
+        try {
+        balance = await getExtdevEthBalance(client, ownerAddress)
+        } catch (err) {
+          throw err
+        } finally {
+          client.disconnect()
+        }
+      }
+      balanceInEth = (new BN(balance).div(new BN(10).pow(new BN(18)))).toString()
+      balance = parseInt(balance);
+      console.log(`${ownerAddress} eth balance is ${balance} in wei (${balanceInEth} in eth)`)
     } catch (err) {
       console.error(err)
     }
