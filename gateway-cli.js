@@ -380,8 +380,9 @@ program
   .action(async function(amount, options) {
     const { account, web3js } = loadRinkeyAccount()
     try {
+      const actualAmount = new BN(amount).mul(coinMultiplier)
       const tx = await depositCoinToRinkebyGateway(
-        web3js, amount * coinMultiplier, account.address, options.gas || 350000
+        web3js, actualAmount, account.address, options.gas || 350000
       )
       console.log(`${amount} tokens deposited to Ethereum Gateway.`)
       console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
