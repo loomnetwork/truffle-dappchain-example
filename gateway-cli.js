@@ -47,17 +47,30 @@ async function getRinkebyCoinBalance(web3js, accountAddress) {
 // with contracts that don't implement safe transfer.
 async function depositCoinToRinkebyGateway(web3js, amount, ownerAccount, gas) {
   const contract = await getRinkebyCoinContract(web3js)
+  const gateway  = await getRinkebyGatewayContract(web3js)
   
-  const gasEstimate = await contract.methods
-    .safeTransferAndCall(rinkebyGatewayAddress, amount)
+  let gasEstimate = await contract.methods
+    .approve(gateway.address, amount)
+    .estimateGas({ from: ownerAccount, gas })
+
+  if (gasEstimate == gas) {
+    throw new Error('Not enough enough gas, send more.')
+  }
+
+  await contract.methods
+    .approve(gateway.address, amount)
+    .send({ from: ownerAccount, gas: gasEstimate })
+
+  gasEstimate = await gateway.methods
+    .depositERC20(amount, contract.address)
     .estimateGas({ from: ownerAccount, gas })
 
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
   }
   
-  return contract.methods
-    .safeTransferAndCall(rinkebyGatewayAddress, amount)
+  return gateway.methods
+    .depositERC20(amount, contract.address)
     .send({ from: ownerAccount, gas: gasEstimate })
 }
 
