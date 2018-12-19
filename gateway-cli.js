@@ -23,7 +23,7 @@ const EthCoin = Contracts.EthCoin
 
 // See https://loomx.io/developers/docs/en/testnet-plasma.html#contract-addresses-transfer-gateway
 // for the most up to date address.
-const rinkebyGatewayAddress = '0x6f7Eb868b2236638c563af71612c9701AC30A388'
+const rinkebyGatewayAddress = '0xF19D543f5ca6974b8b9b39Fcb923286dE4e9D975'
 const extdevGatewayAddress = '0xE754d9518bF4a9C63476891eF9Aa7D91c8236a5d'
 const extdevChainId = 'extdev-plasma-us1'
 
