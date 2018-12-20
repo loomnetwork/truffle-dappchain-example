@@ -11,3 +11,4 @@ src/contracts
 /rinkeby_account
 /rinkeby_mnemonic
 /extdev_private_key
+.DS_Store
