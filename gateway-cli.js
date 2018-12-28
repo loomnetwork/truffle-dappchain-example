@@ -37,6 +37,11 @@ async function getRinkebyCoinContract(web3js) {
   )
 }
 
+async function getRinkebyCoinContractAddress(web3js) {
+  const networkId = await web3js.eth.net.getId()
+  return MyRinkebyCoinJSON.networks[networkId].address
+}
+
 async function getRinkebyCoinBalance(web3js, accountAddress) {
   const contract = await getRinkebyCoinContract(web3js)
   const balance = await contract.methods
@@ -50,34 +55,34 @@ async function getRinkebyEthBalance(web3js, accountAddress) {
   return balance
 }
 
-// TODO: add an option to use the approve/depositERC20 flow to demonstrate how to use the Gateway
-// with contracts that don't implement safe transfer.
 async function depositCoinToRinkebyGateway(web3js, amount, ownerAccount, gas) {
   const contract = await getRinkebyCoinContract(web3js)
+  const contractAddress = await getRinkebyCoinContractAddress(web3js)
   const gateway  = await getRinkebyGatewayContract(web3js)
-  
+
   let gasEstimate = await contract.methods
-    .approve(gateway.address, amount)
-    .estimateGas({ from: ownerAccount, gas })
+    .approve(rinkebyGatewayAddress, amount.toString())
+    .estimateGas({ from: ownerAccount })
 
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
   }
 
   await contract.methods
-    .approve(gateway.address, amount)
+    .approve(rinkebyGatewayAddress, amount.toString())
     .send({ from: ownerAccount, gas: gasEstimate })
 
   gasEstimate = await gateway.methods
-    .depositERC20(amount, contract.address)
+    .depositERC20(amount.toString(), contractAddress)
     .estimateGas({ from: ownerAccount, gas })
+      console.log(gasEstimate)
 
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
   }
   
   return gateway.methods
-    .depositERC20(amount, contract.address)
+    .depositERC20(amount.toString(), contractAddress)
     .send({ from: ownerAccount, gas: gasEstimate })
 }
 
@@ -242,7 +247,7 @@ async function depositCoinToExtdevGateway({
   
   const coinContract = getExtdevCoinContract(web3js)
   await coinContract.methods
-    .approve(extdevGatewayAddress.toLowerCase(), amount)
+    .approve(extdevGatewayAddress.toLowerCase(), amount.toString())
     .send({ from: ownerExtdevAddress })
   
   const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
@@ -373,6 +378,7 @@ async function getRinkebyGatewayContract(web3js) {
     RinkebyGatewayJSON.networks[networkId].address
   )
 }
+
 
 async function withdrawCoinFromRinkebyGateway({ web3js, amount, accountAddress, signature, gas }) {
   const gatewayContract = await getRinkebyGatewayContract(web3js)
@@ -511,8 +517,9 @@ program
   .action(async function(amount, options) {
     const { account, web3js } = loadRinkeyAccount()
     try {
+      const actualAmount = new BN(amount).mul(coinMultiplier)
       const tx = await depositCoinToRinkebyGateway(
-        web3js, amount * coinMultiplier, account.address, options.gas || 350000
+        web3js, actualAmount, account.address, options.gas || 350000
       )
       console.log(`${amount} tokens deposited to Ethereum Gateway.`)
       console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
