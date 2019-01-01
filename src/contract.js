@@ -53,8 +53,8 @@ export default class Contract {
       console.error('Error on connect to client', msg)
       console.warn('Please verify if loom command is running')
     })
-
   }
+  
   _createCurrentUserAddress() {
     this.currentUserAddress = LocalAddress.fromPublicKey(this.publicKey).toString()
   }
