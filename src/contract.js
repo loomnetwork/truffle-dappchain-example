@@ -1,11 +1,12 @@
 import {
-  Client, LocalAddress, CryptoUtils, LoomProvider
+  Client, LocalAddress, CryptoUtils, LoomProvider, createJSONRPCClient
 } from 'loom-js'
 
 import Web3 from 'web3'
 import SimpleStore from './contracts/SimpleStore.json'
 
 export default class Contract {
+
   async loadContract() {
     this.onEvent = null
     this._createClient()
@@ -17,18 +18,43 @@ export default class Contract {
   _createClient() {
     this.privateKey = CryptoUtils.generatePrivateKey()
     this.publicKey = CryptoUtils.publicKeyFromPrivateKey(this.privateKey)
+    let writeUrl = 'ws://127.0.0.1:46658/websocket'
+    let readUrl = 'ws://127.0.0.1:46658/queryws'
+    let networkId = 'default'
+
+    if (process.env.NETWORK == 'extdev') {
+      writeUrl = 'http://extdev-plasma-us1.dappchains.com:80/rpc'
+      readUrl = 'http://extdev-plasma-us1.dappchains.com:80/query'
+      networkId = 'extdev-plasma-us1'
+    }
+
+    const writeClient = createJSONRPCClient({
+      protocols: [
+        {
+          url: writeUrl
+        }
+      ]
+    })
+    const readClient = createJSONRPCClient({
+      protocols: [
+        {
+          url: readUrl
+        }
+      ]
+    })
     this.client = new Client(
-      'default',
-      'ws://127.0.0.1:46658/websocket',
-      'ws://127.0.0.1:46658/queryws',
+      networkId,
+      writeClient,
+      readClient
     )
+
 
     this.client.on('error', msg => {
       console.error('Error on connect to client', msg)
       console.warn('Please verify if loom command is running')
     })
-  }
 
+  }
   _createCurrentUserAddress() {
     this.currentUserAddress = LocalAddress.fromPublicKey(this.publicKey).toString()
   }
@@ -50,7 +76,7 @@ export default class Contract {
       from: this.currentUserAddress
     })
 
-    this.simpleStoreInstance.events.NewValueSet({ filter: { _value: 10 }}, (err, event) => {
+    this.simpleStoreInstance.events.NewValueSet({ filter: { _value: 10 } }, (err, event) => {
       if (err) console.error('Error on event', err)
       else {
         if (this.onEvent) {
@@ -59,7 +85,7 @@ export default class Contract {
       }
     })
 
-    this.simpleStoreInstance.events.NewValueSetAgain({ filter: { _value: 47 }}, (err, event) => {
+    this.simpleStoreInstance.events.NewValueSetAgain({ filter: { _value: 47 } }, (err, event) => {
       if (err) console.error('Error on event', err)
       else {
         setTimeout(() => alert("Loooomy help me :)"))
