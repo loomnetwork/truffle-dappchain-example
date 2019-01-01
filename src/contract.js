@@ -54,7 +54,7 @@ export default class Contract {
       console.warn('Please verify if loom command is running')
     })
   }
-  
+
   _createCurrentUserAddress() {
     this.currentUserAddress = LocalAddress.fromPublicKey(this.publicKey).toString()
   }
@@ -76,7 +76,7 @@ export default class Contract {
       from: this.currentUserAddress
     })
 
-    this.simpleStoreInstance.events.NewValueSet({ filter: { _value: 10 } }, (err, event) => {
+    this.simpleStoreInstance.events.NewValueSet({ filter: { _value: 10 }}, (err, event) => {
       if (err) console.error('Error on event', err)
       else {
         if (this.onEvent) {
@@ -85,7 +85,7 @@ export default class Contract {
       }
     })
 
-    this.simpleStoreInstance.events.NewValueSetAgain({ filter: { _value: 47 } }, (err, event) => {
+    this.simpleStoreInstance.events.NewValueSetAgain({ filter: { _value: 47 }}, (err, event) => {
       if (err) console.error('Error on event', err)
       else {
         setTimeout(() => alert("Loooomy help me :)"))
