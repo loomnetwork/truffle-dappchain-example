@@ -1,7 +1,7 @@
 const MyToken = artifacts.require('./MyToken.sol')
 const MyCoin = artifacts.require('./MyCoin.sol')
 
-const gatewayAddress = '0xE754d9518bF4a9C63476891eF9Aa7D91c8236a5d'
+const gatewayAddress = '0xe754d9518bf4a9c63476891ef9AA7d91C8236A5D'
 
 module.exports = function (deployer, network, accounts) {
   if (network === 'rinkeby') {
