@@ -6,6 +6,11 @@ const HDWalletProvider = require('truffle-hdwallet-provider')
 
 module.exports = {
   contracts_build_directory: join(__dirname, './src/contracts'),
+  compilers: {
+    solc: {
+      version: '0.4.24'
+    }
+  },
   networks: {
     loom_dapp_chain: {
       provider: function() {
