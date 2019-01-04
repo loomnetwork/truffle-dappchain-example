@@ -28,26 +28,7 @@ export default class Contract {
       networkId = 'extdev-plasma-us1'
     }
 
-    const writeClient = createJSONRPCClient({
-      protocols: [
-        {
-          url: writeUrl
-        }
-      ]
-    })
-    const readClient = createJSONRPCClient({
-      protocols: [
-        {
-          url: readUrl
-        }
-      ]
-    })
-    this.client = new Client(
-      networkId,
-      writeClient,
-      readClient
-    )
-
+    this.client = new Client(networkId, readUrl, writeUrl)
 
     this.client.on('error', msg => {
       console.error('Error on connect to client', msg)
