@@ -6,7 +6,6 @@ import Web3 from 'web3'
 import SimpleStore from './contracts/SimpleStore.json'
 
 export default class Contract {
-
   async loadContract() {
     this.onEvent = null
     this._createClient()
