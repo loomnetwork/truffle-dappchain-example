@@ -79,6 +79,15 @@ The web interface is build with React using webpack to compile and generate the 
 yarn serve
 ```
 
+Or run this command to send transactions to the contract deployed on testnet (requires `yarn deploy:extdev`)
+
+```bash
+
+# On a third terminal
+
+yarn serve:extdev
+```
+
 The web interface will be available on http://localhost:8080
 
 ## Current limitations
