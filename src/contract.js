@@ -23,8 +23,8 @@ export default class Contract {
     let networkId = 'default'
 
     if (process.env.NETWORK == 'extdev') {
-      writeUrl = 'http://extdev-plasma-us1.dappchains.com:80/rpc'
-      readUrl = 'http://extdev-plasma-us1.dappchains.com:80/query'
+      writeUrl = 'ws://extdev-plasma-us1.dappchains.com:80/websocket'
+      readUrl = 'ws://extdev-plasma-us1.dappchains.com:80/queryws'
       networkId = 'extdev-plasma-us1'
     }
 
