@@ -5903,10 +5903,10 @@ loglevel@^1.4.1:
   resolved "https://registry.yarnpkg.com/loglevel/-/loglevel-1.6.1.tgz#e0fc95133b6ef276cdc8887cdaf24aa6f156f8fa"
   integrity sha1-4PyVEztu8nbNyIh82vJKpvFW+Po=
 
-loom-js@^1.37.1:
-  version "1.37.1"
-  resolved "https://registry.yarnpkg.com/loom-js/-/loom-js-1.37.1.tgz#a63c0b7e975d9003135df286290f048b0b089020"
-  integrity sha512-Hlb0s5C+8p4D/OLE9k56xIF7P8Ihos4ZomqndVcW65mrqdDBZ348FqfQUcoBXcVZC8iiusr7MfpYoQU6InJBcg==
+loom-js@^1.38.0:
+  version "1.38.0"
+  resolved "https://registry.yarnpkg.com/loom-js/-/loom-js-1.38.0.tgz#ab5229c3cd8a781bdcbf4b64265a28159d43ea7c"
+  integrity sha512-TaJ1jFOycZA9CrPpjgDY88aX4P2RBmz2MGDpONZjPVwWyI9TZ7VF4EQr5sKq2TjOsoqbcq5jnFNVDuIyBIfseA==
   dependencies:
     abi-decoder "^1.2.0"
     axios "^0.18.0"
@@ -5928,15 +5928,15 @@ loom-js@^1.37.1:
     tweetnacl "^1.0.0"
     web3 "1.0.0-beta.33"
 
-loom-truffle-provider@^0.10.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/loom-truffle-provider/-/loom-truffle-provider-0.10.0.tgz#ff572681c453ec9030f98e782271949fc5e59254"
-  integrity sha512-LeFXqa60cTrFsBWFcHRJUCzHqxRC3+tp4TzpdnwLgCQwisoFnaskijtK3y5M2P+7zpwdisiBrlNco8QP5iihpA==
+loom-truffle-provider@^0.11.0:
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/loom-truffle-provider/-/loom-truffle-provider-0.11.0.tgz#155d6fa419e0e6348f001081d55b4868c7a45532"
+  integrity sha512-zkttGnEwgFmUvQAHosYNKhjy+FJhO2PT6Exq7i8+xt1st7f+EMb7Mn2Qh/vivbYzLSm3sUYMLlB+kdq9DqV/2g==
   dependencies:
     bip39 "^2.5.0"
     bn.js "^4.11.8"
     ed25519-hd-key "^1.0.0"
-    loom-js "^1.37.1"
+    loom-js "^1.38.0"
 
 loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.2.0, loose-envify@^1.3.1:
   version "1.4.0"
