@@ -1,5 +1,5 @@
 import {
-  Client, LocalAddress, CryptoUtils, LoomProvider, createJSONRPCClient
+  Client, LocalAddress, CryptoUtils, LoomProvider
 } from 'loom-js'
 
 import Web3 from 'web3'
