@@ -432,7 +432,7 @@ async function withdrawTokenFromRinkebyGateway({ web3js, tokenId, accountAddress
     .send({ from: accountAddress, gas: gasEstimate })
 }
 
-function loadRinkeyAccount() {
+function loadRinkebyAccount() {
   const privateKey = fs.readFileSync(path.join(__dirname, './rinkeby_private_key'), 'utf-8')
   const web3js = new Web3(`https://rinkeby.infura.io/${process.env.INFURA_API_KEY}`)
   const ownerAccount = web3js.eth.accounts.privateKeyToAccount('0x' + privateKey)
@@ -515,7 +515,7 @@ program
   .description('deposit the specified amount of ERC20 tokens into the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
   .action(async function(amount, options) {
-    const { account, web3js } = loadRinkeyAccount()
+    const { account, web3js } = loadRinkebyAccount()
     try {
       const actualAmount = new BN(amount).mul(coinMultiplier)
       const tx = await depositCoinToRinkebyGateway(
@@ -533,7 +533,7 @@ program
   .description('deposit the specified amount of ETH into the Transfer Gateway')
   .option("-u, --unit <ethUnit>", "eth unit")
   .action(async function(amount, options) {
-    const { account, web3js } = loadRinkeyAccount()
+    const { account, web3js } = loadRinkebyAccount()
     try {
       let unit = options.unit;
       if(options.unit == null) {
@@ -560,7 +560,7 @@ program
     let client
     try {
       const extdev = loadExtdevAccount()
-      const rinkeby = loadRinkeyAccount()
+      const rinkeby = loadRinkebyAccount()
       client = extdev.client
 
       const actualAmount = new BN(amount).mul(coinMultiplier)
@@ -608,7 +608,7 @@ program
     }
     try {
       const extdev = loadExtdevAccount()
-      const rinkeby = loadRinkeyAccount()
+      const rinkeby = loadRinkebyAccount()
       client = extdev.client
 
       const actualAmount = new BN(rinkeby.web3js.utils.toWei(amount, unit))
@@ -648,7 +648,7 @@ program
     let client
     try {
       const extdev = loadExtdevAccount()
-      const rinkeby = loadRinkeyAccount()
+      const rinkeby = loadRinkebyAccount()
       client = extdev.client
 
       const networkId = await rinkeby.web3js.eth.net.getId()
@@ -689,7 +689,7 @@ program
     let client
     try {
       const extdev = loadExtdevAccount()
-      const rinkeby = loadRinkeyAccount()
+      const rinkeby = loadRinkebyAccount()
       client = extdev.client
 
       const networkId = await rinkeby.web3js.eth.net.getId()
@@ -753,7 +753,7 @@ program
     try {
       let ownerAddress, balance
       if (options.chain === 'eth') {
-        const { account, web3js } = loadRinkeyAccount()
+        const { account, web3js } = loadRinkebyAccount()
         ownerAddress = account.address
         if (options.account) {
           ownerAddress = (options.account === 'gateway') ? rinkebyGatewayAddress : options.account
@@ -788,7 +788,7 @@ program
     try {
       let ownerAddress, balance, balanceInEth
       if (options.chain === 'eth') {
-        const { account, web3js } = loadRinkeyAccount()
+        const { account, web3js } = loadRinkebyAccount()
         ownerAddress = account.address
         
         if (options.account) {
@@ -822,7 +822,7 @@ program
   .description('deposit an ERC721 token into the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
   .action(async function(uid, options) {
-    const { account, web3js } = loadRinkeyAccount()
+    const { account, web3js } = loadRinkebyAccount()
     try {
       const tx = await depositTokenToGateway(web3js, uid, account.address, options.gas || 350000)
       console.log(`Token ${uid} deposited, Rinkeby tx hash: ${tx.transactionHash}`)
@@ -836,7 +836,7 @@ program
   .description('mint an ERC721 token on Rinkeby')
   .option("-g, --gas <number>", "Gas for the tx")
   .action(async function(uid, options) {
-    const { account, web3js } = loadRinkeyAccount()
+    const { account, web3js } = loadRinkebyAccount()
     try {
       const tx = await mintToken(web3js, uid, account.address, options.gas || 350000)
       console.log(`Token ${uid} minted, Rinkeby tx hash: ${tx.transactionHash}`)
@@ -854,7 +854,7 @@ program
     try {
       let ownerAddress, balance
       if (options.chain === 'eth') {
-        const { account, web3js } = loadRinkeyAccount()
+        const { account, web3js } = loadRinkebyAccount()
         ownerAddress = account.address
         if (options.account) {
           ownerAddress = (options.account === 'gateway') ? rinkebyGatewayAddress : options.account
@@ -889,7 +889,7 @@ program
   .action(async function(contractType, options) {
     let client
     try {
-      const rinkeby = loadRinkeyAccount()
+      const rinkeby = loadRinkebyAccount()
       const extdev = loadExtdevAccount()
       client = extdev.client
       const networkId = await rinkeby.web3js.eth.net.getId()
@@ -933,7 +933,7 @@ program
   .action(async function() {
     let client
     try {
-      const rinkeby = loadRinkeyAccount()
+      const rinkeby = loadRinkebyAccount()
       const extdev = loadExtdevAccount()
       client = extdev.client
 
