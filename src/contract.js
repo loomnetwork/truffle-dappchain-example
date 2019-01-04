@@ -28,7 +28,7 @@ export default class Contract {
       networkId = 'extdev-plasma-us1'
     }
 
-    this.client = new Client(networkId, readUrl, writeUrl)
+    this.client = new Client(networkId, writeUrl, readUrl)
 
     this.client.on('error', msg => {
       console.error('Error on connect to client', msg)
