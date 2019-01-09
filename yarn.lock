@@ -5381,7 +5381,7 @@ loglevel@^1.4.1:
   resolved "https://registry.yarnpkg.com/loglevel/-/loglevel-1.6.1.tgz#e0fc95133b6ef276cdc8887cdaf24aa6f156f8fa"
   integrity sha1-4PyVEztu8nbNyIh82vJKpvFW+Po=
 
-loom-js@^1.38.0:
+loom-js@1.38.0, loom-js@^1.38.0:
   version "1.38.0"
   resolved "https://registry.yarnpkg.com/loom-js/-/loom-js-1.38.0.tgz#ab5229c3cd8a781bdcbf4b64265a28159d43ea7c"
   integrity sha512-TaJ1jFOycZA9CrPpjgDY88aX4P2RBmz2MGDpONZjPVwWyI9TZ7VF4EQr5sKq2TjOsoqbcq5jnFNVDuIyBIfseA==
