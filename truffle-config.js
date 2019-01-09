@@ -32,7 +32,7 @@ module.exports = {
         const readUrl = 'http://extdev-plasma-us1.dappchains.com:80/query'
         return new LoomTruffleProvider(chainId, writeUrl, readUrl, privateKey)
       },
-      network_id: 'extdev-plasma-us1'
+      network_id: '9545242630824'
     },
     rinkeby: {
       provider: function() {

@@ -187,24 +187,24 @@ async function depositTokenToGateway(web3js, tokenId, ownerAccount, gas) {
     .send({ from: ownerAccount, gas: gasEstimate })
 }
 
-function getExtdevCoinContract(web3js) {
-  // NOTE: web3js.eth.net.getId() will throw an error due to a non-numeric net ID, so don't call it.
+async function getExtdevCoinContract(web3js) {
+  const networkId = await web3js.eth.net.getId()
   return new web3js.eth.Contract(
     MyCoinJSON.abi,
-    MyCoinJSON.networks[extdevChainId].address,
+    MyCoinJSON.networks[networkId].address,
   )
 }
 
-function getExtdevTokenContract(web3js) {
-  // NOTE: web3js.eth.net.getId() will throw an error due to a non-numeric net ID, so don't call it.
+async function getExtdevTokenContract(web3js) {
+  const networkId = await web3js.eth.net.getId()
   return new web3js.eth.Contract(
     MyTokenJSON.abi,
-    MyTokenJSON.networks[extdevChainId].address,
+    MyTokenJSON.networks[networkId].address,
   )
 }
 
 async function getExtdevCoinBalance(web3js, accountAddress) {
-  const contract = getExtdevCoinContract(web3js)
+  const contract = await getExtdevCoinContract(web3js)
   const addr = accountAddress.toLowerCase()
   const balance = await contract.methods
     .balanceOf(addr)
@@ -220,7 +220,7 @@ async function getExtdevEthBalance(client, accountAddress) {
 }
 
 async function getExtdevTokenBalance(web3js, accountAddress) {
-  const contract = getExtdevTokenContract(web3js)
+  const contract = await getExtdevTokenContract(web3js)
   const addr = accountAddress.toLowerCase()
   const total = await contract.methods
     .balanceOf(addr)
@@ -245,7 +245,7 @@ async function depositCoinToExtdevGateway({
   const ownerExtdevAddr = Address.fromString(`${client.chainId}:${ownerExtdevAddress}`)
   const gatewayContract = await TransferGateway.createAsync(client, ownerExtdevAddr)
   
-  const coinContract = getExtdevCoinContract(web3js)
+  const coinContract = await getExtdevCoinContract(web3js)
   await coinContract.methods
     .approve(extdevGatewayAddress.toLowerCase(), amount.toString())
     .send({ from: ownerExtdevAddress })
@@ -332,7 +332,7 @@ async function depositTokenToExtdevGateway({
   const ownerExtdevAddr = Address.fromString(`${client.chainId}:${ownerExtdevAddress}`)
   const gatewayContract = await TransferGateway.createAsync(client, ownerExtdevAddr)
   
-  const coinContract = getExtdevTokenContract(web3js)
+  const coinContract = await getExtdevTokenContract(web3js)
   await coinContract.methods
     .approve(extdevGatewayAddress.toLowerCase(), tokenId)
     .send({ from: ownerExtdevAddress })
@@ -564,15 +564,16 @@ program
       client = extdev.client
 
       const actualAmount = new BN(amount).mul(coinMultiplier)
-      const networkId = await rinkeby.web3js.eth.net.getId()
+      const rinkebyNetworkId = await rinkeby.web3js.eth.net.getId()
+      const extdevNetworkId = await extdev.web3js.eth.net.getId()
       const signature = await depositCoinToExtdevGateway({
         client: extdev.client,
         web3js: extdev.web3js,
         amount: actualAmount,
         ownerExtdevAddress: extdev.account,
         ownerRinkebyAddress: rinkeby.account.address,
-        tokenExtdevAddress: MyCoinJSON.networks[extdevChainId].address,
-        tokenRinkebyAddress: MyRinkebyCoinJSON.networks[networkId].address,
+        tokenExtdevAddress: MyCoinJSON.networks[extdevNetworkId].address,
+        tokenRinkebyAddress: MyRinkebyCoinJSON.networks[rinkebyNetworkId].address,
         timeout: options.timeout ? (options.timeout * 1000) : 120000
       })
       const tx = await withdrawCoinFromRinkebyGateway({
@@ -651,15 +652,16 @@ program
       const rinkeby = loadRinkebyAccount()
       client = extdev.client
 
-      const networkId = await rinkeby.web3js.eth.net.getId()
+      const rinkebyNetworkId = await rinkeby.web3js.eth.net.getId()
+      const extdevNetworkId = await extdev.web3js.eth.net.getId()
       const signature = await depositTokenToExtdevGateway({
         client: extdev.client,
         web3js: extdev.web3js,
         tokenId: uid,
         ownerExtdevAddress: extdev.account,
         ownerRinkebyAddress: rinkeby.account.address,
-        tokenExtdevAddress: MyTokenJSON.networks[extdevChainId].address,
-        tokenRinkebyAddress: MyRinkebyTokenJSON.networks[networkId].address,
+        tokenExtdevAddress: MyTokenJSON.networks[extdevNetworkId].address,
+        tokenRinkebyAddress: MyRinkebyTokenJSON.networks[rinkebyNetworkId].address,
         timeout: options.timeout ? (options.timeout * 1000) : 120000
       })
       console.log(`Token ${uid} deposited to DAppChain Gateway...`)
@@ -892,17 +894,18 @@ program
       const rinkeby = loadRinkebyAccount()
       const extdev = loadExtdevAccount()
       client = extdev.client
-      const networkId = await rinkeby.web3js.eth.net.getId()
+      const rinkebyNetworkId = await rinkeby.web3js.eth.net.getId()
+      const extdevNetworkId = await extdev.web3js.eth.net.getId()
 
       let tokenRinkebyAddress, tokenExtdevAddress, rinkebyTxHash
       if (contractType === 'coin') {
-        tokenRinkebyAddress = MyRinkebyCoinJSON.networks[networkId].address
-        rinkebyTxHash = MyRinkebyCoinJSON.networks[networkId].transactionHash
-        tokenExtdevAddress = MyCoinJSON.networks[extdevChainId].address
+        tokenRinkebyAddress = MyRinkebyCoinJSON.networks[rinkebyNetworkId].address
+        rinkebyTxHash = MyRinkebyCoinJSON.networks[rinkebyNetworkId].transactionHash
+        tokenExtdevAddress = MyCoinJSON.networks[extdevNetworkId].address
       } else if (contractType === 'token') {
-        tokenRinkebyAddress = MyRinkebyTokenJSON.networks[networkId].address
-        rinkebyTxHash = MyRinkebyTokenJSON.networks[networkId].transactionHash
-        tokenExtdevAddress = MyTokenJSON.networks[extdevChainId].address
+        tokenRinkebyAddress = MyRinkebyTokenJSON.networks[rinkebyNetworkId].address
+        rinkebyTxHash = MyRinkebyTokenJSON.networks[rinkebyNetworkId].transactionHash
+        tokenExtdevAddress = MyTokenJSON.networks[extdevNetworkId].address
       } else {
         console.log('Specify which contracts you wish to map, "coin" or "token"')
         return
