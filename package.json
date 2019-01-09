@@ -12,6 +12,7 @@
     "test": "truffle test --network loom_dapp_chain",
     "test:extdev": "truffle test --network extdev_plasma_us1",
     "serve": "webpack-dev-server --hot --content-base ./dist",
+    "serve:extdev": "NETWORK=extdev yarn run serve",
     "gen:rinkeby-key": "node ./scripts/gen-eth-key.js rinkeby"
   },
   "dependencies": {
