@@ -40,12 +40,12 @@ contract MyERC721XRinkebyToken is ERC721XToken {
     }
 
     function depositToGatewayNFT(uint256 _tokenId) public {
-        require(tokenType[_tokenId] == NFT, "You are not transferring a  NFT");
+        //require(tokenType[_tokenId] == NFT, "You are not transferring a  NFT");
         safeTransferFrom(msg.sender, gateway, _tokenId);
     }
 
     function depositToGateway(uint256 _tokenId, uint256 amount) public {
-        require(tokenType[_tokenId] == FT, "You are not transferring a  FT");
+        //require(tokenType[_tokenId] == FT, "You are not transferring a  FT");
         safeTransferFrom(msg.sender, gateway, _tokenId, amount);
     }
 

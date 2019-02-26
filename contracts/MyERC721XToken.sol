@@ -32,6 +32,12 @@ contract MyERC721XToken is ERC721XToken {
         _mint(_tokenId, gateway, supply.add(_amount));
     }
 
+    function mintToGateway(uint256 _uid) public
+    {
+        require(msg.sender == gateway, "only the gateway is allowed to mint");
+        _mint(_uid, gateway);
+    }
+
     // This is a workaround for go-ethereum's abigen not being able to handle function overloads.
     function balanceOfToken(address _owner, uint256 _tokenId) public view returns (uint256) {
         return balanceOf(_owner, _tokenId);

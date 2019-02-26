@@ -13,6 +13,7 @@ const {
   CryptoUtils,
   LoomProvider,
   Contracts,
+  Contract,
   Web3Signer,
   soliditySha3
 } = require('loom-js')
@@ -162,15 +163,13 @@ async function getRinkebyTokenContract(web3js) {
   )
 }
 
-async function getERC721XRinkebyTokenContract(web3js) {
+async function getRinkebyERC721XContract(web3js) {
   const networkId = await web3js.eth.net.getId()
   return new web3js.eth.Contract(
     MyRinkebyERC721XJSON.abi,
     MyRinkebyERC721XJSON.networks[networkId].address
   )
 }
-
-
 
 // Returns an object containing the total number of tokens owned by the given account,
 // and up to 5 token IDs.
@@ -193,12 +192,13 @@ async function getRinkebyTokenBalance(web3js, accountAddress) {
 }
 
 async function getRinkebyERC721XBalance(web3js, accountAddress) {
-  const contract = await getERC721XRinkebyTokenContract(web3js)
+  const contract = await getRinkebyERC721XContract(web3js)
+  const addr = accountAddress.toLowerCase()
   const {
     indexes,
     balances
   } = await contract.methods
-    .tokensOwned(accountAddress)
+    .tokensOwned(addr)
     .call()
   return {
     indexes,
@@ -206,27 +206,19 @@ async function getRinkebyERC721XBalance(web3js, accountAddress) {
   }
 }
 
-/*
-function ownerOf(uint256 _tokenId) public view returns (address _owner);
-function balanceOf(address owner) public view returns (uint256);
-function balanceOf(address owner, uint256 tokenId) public view returns (uint256);
-function tokensOwned(address owner) public view returns (uint256[], uint256[]);
-
-*/
 async function getExtdevERC721XBalance(web3js, accountAddress) {
   const contract = await getExtdevERC721XContract(web3js)
   const addr = accountAddress.toLowerCase()
-  //just for debugging
-  const balance = await contract.balanceOfToken(addr, 1)
-  /*const {indexes, balances} = await contract.methods
-    .tokensOwned(addr)
-    .call({
-      from: addr
-    })
+  const {
+    indexes,
+    balances
+  } = await contract.methods.tokensOwned(addr).call({
+    from: addr
+  })
   return {
     indexes,
     balances
-  }*/
+  }
 }
 
 async function mintToken(web3js, tokenId, ownerAccount, gas) {
@@ -251,15 +243,13 @@ async function mintToken(web3js, tokenId, ownerAccount, gas) {
 
 
 async function mintNFT(web3js, tokenId, ownerAccount, gas) {
-  const contract = await getERC721XRinkebyTokenContract(web3js)
-
+  const contract = await getRinkebyERC721XContract(web3js)
   const gasEstimate = await contract.methods
     .mint(tokenId, ownerAccount)
     .estimateGas({
       from: ownerAccount,
       gas
     })
-
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
   }
@@ -272,14 +262,13 @@ async function mintNFT(web3js, tokenId, ownerAccount, gas) {
 }
 
 async function mintFT(web3js, tokenId, amount, ownerAccount, gas) {
-  const contract = await getERC721XRinkebyTokenContract(web3js)
+  const contract = await getRinkebyERC721XContract(web3js)
   const gasEstimate = await contract.methods
     .mintTokens(ownerAccount, tokenId, amount)
     .estimateGas({
       from: ownerAccount,
       gas
     })
-
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
   }
@@ -293,18 +282,15 @@ async function mintFT(web3js, tokenId, amount, ownerAccount, gas) {
 
 async function depositTokenToGateway(web3js, tokenId, ownerAccount, gas) {
   const contract = await getRinkebyTokenContract(web3js)
-
   const gasEstimate = await contract.methods
     .depositToGateway(rinkebyGatewayAddress, tokenId)
     .estimateGas({
       from: ownerAccount,
       gas
     })
-
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
   }
-
   return contract.methods
     .depositToGateway(rinkebyGatewayAddress, tokenId)
     .send({
@@ -315,19 +301,16 @@ async function depositTokenToGateway(web3js, tokenId, ownerAccount, gas) {
 
 
 async function depositNFTToGateway(web3js, tokenId, ownerAccount, gas) {
-  const contract = await getERC721XRinkebyTokenContract(web3js)
-
+  const contract = await getRinkebyERC721XContract(web3js)
   const gasEstimate = await contract.methods
     .depositToGatewayNFT(tokenId)
     .estimateGas({
       from: ownerAccount,
       gas
     })
-
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
   }
-
   return contract.methods
     .depositToGatewayNFT(tokenId)
     .send({
@@ -337,8 +320,7 @@ async function depositNFTToGateway(web3js, tokenId, ownerAccount, gas) {
 }
 
 async function depositFTToGateway(web3js, tokenId, amount, ownerAccount, gas) {
-  const contract = await getERC721XRinkebyTokenContract(web3js)
-
+  const contract = await getRinkebyERC721XContract(web3js)
   const gasEstimate = await contract.methods
     .depositToGateway(tokenId, amount)
     .estimateGas({
@@ -349,7 +331,6 @@ async function depositFTToGateway(web3js, tokenId, amount, ownerAccount, gas) {
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
   }
-
   return contract.methods
     .depositToGateway(tokenId, amount)
     .send({
@@ -380,6 +361,7 @@ async function getExtdevERC721XContract(web3js) {
     MyERC721XJSON.abi,
     MyERC721XJSON.networks[networkId].address
   )
+
 }
 
 async function getExtdevCoinBalance(web3js, accountAddress) {
@@ -569,7 +551,7 @@ async function depositTokenToExtdevGateway({
   return CryptoUtils.bytesToHexAddr(event.sig)
 }
 
-
+// Not tested yet.
 async function depositNFTToExtdevGateway({
   client,
   web3js,
@@ -618,7 +600,6 @@ async function depositNFTToExtdevGateway({
   return CryptoUtils.bytesToHexAddr(event.sig)
 }
 
-
 async function getPendingWithdrawalReceipt(client, ownerAddress) {
   const ownerAddr = Address.fromString(`${client.chainId}:${ownerAddress}`)
   const gatewayContract = await TransferGateway.createAsync(client, ownerAddr)
@@ -632,7 +613,6 @@ async function getRinkebyGatewayContract(web3js) {
     RinkebyGatewayJSON.networks[networkId].address
   )
 }
-
 
 async function withdrawCoinFromRinkebyGateway({
   web3js,
@@ -693,6 +673,7 @@ async function withdrawEthFromRinkebyGateway({
 
 }
 
+//not tested yet
 async function withdrawTokenFromRinkebyGateway({
   web3js,
   tokenId,
@@ -724,6 +705,7 @@ async function withdrawTokenFromRinkebyGateway({
     })
 }
 
+//not tested yet
 async function withdrawNFTFromRinkebyGateway({
   web3js,
   tokenId,
@@ -1000,8 +982,8 @@ program
         tokenId: uid,
         ownerExtdevAddress: extdev.account,
         ownerRinkebyAddress: rinkeby.account.address,
-        tokenExtdevAddress: MyNewTokenJSON.networks[extdevNetworkId].address,
-        tokenRinkebyAddress: MyNewRinkebyTokenJSON.networks[rinkebyNetworkId].address,
+        tokenExtdevAddress: MyTokenJSON.networks[extdevNetworkId].address,
+        tokenRinkebyAddress: MyRinkebyTokenJSON.networks[rinkebyNetworkId].address,
         timeout: options.timeout ? (options.timeout * 1000) : 120000
       })
       console.log(`Token ${uid} deposited to DAppChain Gateway...`)
@@ -1023,6 +1005,7 @@ program
     }
   })
 
+//not tested yet
 program
   .command('withdraw-nft <uid>')
   .description('withdraw the specified ERC721 token via the Transfer Gateway')
@@ -1045,7 +1028,7 @@ program
         ownerExtdevAddress: extdev.account,
         ownerRinkebyAddress: rinkeby.account.address,
         tokenExtdevAddress: MyERC721XJSON.networks[extdevNetworkId].address,
-        tokenRinkebyAddress: MyRinkebyERC721XJSON.networks[rinkebyNetworkId].address, //TODO: fix this name
+        tokenRinkebyAddress: MyRinkebyERC721XJSON.networks[rinkebyNetworkId].address,
         timeout: options.timeout ? (options.timeout * 1000) : 120000
       })
       console.log(`Token ${uid} deposited to DAppChain Gateway...`)
@@ -1067,7 +1050,6 @@ program
       }
     }
   })
-
 
 program
   .command('resume-withdrawal')
@@ -1130,7 +1112,6 @@ program
       }
     }
   })
-
 
 program
   .command('coin-balance')
@@ -1347,7 +1328,7 @@ program
             console.log('Token id: ' + indexes[i] + ', balance: ' + balances[i])
           }
         }
-      } else if (options.chain === 'extdev') {
+      } else {
         const {
           account,
           web3js,
@@ -1358,26 +1339,22 @@ program
           ownerAddress = (options.account === 'gateway') ? extdevGatewayAddress : options.account
         }
         try {
-          //simple version for debugging
-          await getExtdevERC721XBalance(web3js, ownerAddress)
-          /*const {
+          const {
             indexes,
             balances
           } = await getExtdevERC721XBalance(web3js, ownerAddress)
+          console.log(indexes)
+          console.log(balances)
           if (indexes && balances) {
             for (i = 0; i < indexes.length; i++) {
               console.log('Token id: ' + indexes[i] + ', balance: ' + balances[i])
             }
           }
-          console.log('indexes: ' + indexes)
-          console.log('balances: ' + balances)*/
         } catch (err) {
           throw err
         } finally {
           client.disconnect()
         }
-
-        client.disconnect()
       }
     } catch (err) {
       console.error(err)
