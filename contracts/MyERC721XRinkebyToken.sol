@@ -24,7 +24,7 @@ contract MyERC721XRinkebyToken is ERC721XToken {
     }
 
     function mintTokens(address _to, uint256 _tokenId, uint256 _amount) external {
-        require(msg.sender == owner);
+        require(msg.sender == ownerOf(_tokenId));
         uint256 supply = balanceOf(_to, _tokenId);
         _mint(_tokenId, _to, supply.add(_amount));
     }
@@ -39,14 +39,14 @@ contract MyERC721XRinkebyToken is ERC721XToken {
         _mint(_tokenId, _to);
     }
 
-    function depositToGatewayNFT(uint256 _tokenId) public {
+    function depositToGatewayNFT(address _gateway, uint256 _tokenId) public {
         //require(tokenType[_tokenId] == NFT, "You are not transferring a  NFT");
-        safeTransferFrom(msg.sender, gateway, _tokenId);
+        safeTransferFrom(msg.sender, _gateway, _tokenId);
     }
 
-    function depositToGateway(uint256 _tokenId, uint256 amount) public {
+    function depositToGateway(address _gateway, uint256 _tokenId, uint256 amount) public {
         //require(tokenType[_tokenId] == FT, "You are not transferring a  FT");
-        safeTransferFrom(msg.sender, gateway, _tokenId, amount);
+        safeTransferFrom(msg.sender, _gateway, _tokenId, amount);
     }
 
     // This is a workaround for go-ethereum's abigen not being able to handle function overloads.

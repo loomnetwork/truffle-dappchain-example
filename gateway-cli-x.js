@@ -4,6 +4,7 @@ const Web3 = require('web3')
 const program = require('commander')
 const fs = require('fs')
 const path = require('path')
+const erc721x = require('./src/erc721x.js');
 const {
   Client,
   NonceTxMiddleware,
@@ -40,6 +41,7 @@ const EthCoin = Contracts.EthCoin
 const rinkebyGatewayAddress = '0xb73C9506cb7f4139A4D6Ac81DF1e5b6756Fab7A2'
 const extdevGatewayAddress = '0xE754d9518bF4a9C63476891eF9Aa7D91c8236a5d'
 const extdevChainId = 'extdev-plasma-us1'
+
 
 const coinMultiplier = new BN(10).pow(new BN(18))
 
@@ -97,7 +99,6 @@ async function depositCoinToRinkebyGateway(web3js, amount, ownerAccount, gas) {
       from: ownerAccount,
       gas
     })
-  console.log(gasEstimate)
 
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
@@ -148,7 +149,7 @@ async function depositEthToRinkebyGateway(web3js, amount, unit, ownerAccount) {
   }
 
   // fire away!
-  return sendSigned(txData, function(err, result) {
+  return sendSigned(txData, function (err, result) {
     if (err) return console.log('error', err)
     console.log('sent', result)
   })
@@ -160,14 +161,6 @@ async function getRinkebyTokenContract(web3js) {
   return new web3js.eth.Contract(
     MyRinkebyTokenJSON.abi,
     MyRinkebyTokenJSON.networks[networkId].address
-  )
-}
-
-async function getRinkebyERC721XContract(web3js) {
-  const networkId = await web3js.eth.net.getId()
-  return new web3js.eth.Contract(
-    MyRinkebyERC721XJSON.abi,
-    MyRinkebyERC721XJSON.networks[networkId].address
   )
 }
 
@@ -191,36 +184,6 @@ async function getRinkebyTokenBalance(web3js, accountAddress) {
   }
 }
 
-async function getRinkebyERC721XBalance(web3js, accountAddress) {
-  const contract = await getRinkebyERC721XContract(web3js)
-  const addr = accountAddress.toLowerCase()
-  const {
-    indexes,
-    balances
-  } = await contract.methods
-    .tokensOwned(addr)
-    .call()
-  return {
-    indexes,
-    balances
-  }
-}
-
-async function getExtdevERC721XBalance(web3js, accountAddress) {
-  const contract = await getExtdevERC721XContract(web3js)
-  const addr = accountAddress.toLowerCase()
-  const {
-    indexes,
-    balances
-  } = await contract.methods.tokensOwned(addr).call({
-    from: addr
-  })
-  return {
-    indexes,
-    balances
-  }
-}
-
 async function mintToken(web3js, tokenId, ownerAccount, gas) {
   const contract = await getRinkebyTokenContract(web3js)
   const gasEstimate = await contract.methods
@@ -235,45 +198,6 @@ async function mintToken(web3js, tokenId, ownerAccount, gas) {
   }
   return contract.methods
     .mint(tokenId)
-    .send({
-      from: ownerAccount,
-      gas: gasEstimate
-    })
-}
-
-
-async function mintNFT(web3js, tokenId, ownerAccount, gas) {
-  const contract = await getRinkebyERC721XContract(web3js)
-  const gasEstimate = await contract.methods
-    .mint(tokenId, ownerAccount)
-    .estimateGas({
-      from: ownerAccount,
-      gas
-    })
-  if (gasEstimate == gas) {
-    throw new Error('Not enough enough gas, send more.')
-  }
-  return contract.methods
-    .mint(tokenId, ownerAccount)
-    .send({
-      from: ownerAccount,
-      gas: gasEstimate
-    })
-}
-
-async function mintFT(web3js, tokenId, amount, ownerAccount, gas) {
-  const contract = await getRinkebyERC721XContract(web3js)
-  const gasEstimate = await contract.methods
-    .mintTokens(ownerAccount, tokenId, amount)
-    .estimateGas({
-      from: ownerAccount,
-      gas
-    })
-  if (gasEstimate == gas) {
-    throw new Error('Not enough enough gas, send more.')
-  }
-  return contract.methods
-    .mintTokens(ownerAccount, tokenId, amount)
     .send({
       from: ownerAccount,
       gas: gasEstimate
@@ -300,45 +224,6 @@ async function depositTokenToGateway(web3js, tokenId, ownerAccount, gas) {
 }
 
 
-async function depositNFTToGateway(web3js, tokenId, ownerAccount, gas) {
-  const contract = await getRinkebyERC721XContract(web3js)
-  const gasEstimate = await contract.methods
-    .depositToGatewayNFT(tokenId)
-    .estimateGas({
-      from: ownerAccount,
-      gas
-    })
-  if (gasEstimate == gas) {
-    throw new Error('Not enough enough gas, send more.')
-  }
-  return contract.methods
-    .depositToGatewayNFT(tokenId)
-    .send({
-      from: ownerAccount,
-      gas: gasEstimate
-    })
-}
-
-async function depositFTToGateway(web3js, tokenId, amount, ownerAccount, gas) {
-  const contract = await getRinkebyERC721XContract(web3js)
-  const gasEstimate = await contract.methods
-    .depositToGateway(tokenId, amount)
-    .estimateGas({
-      from: ownerAccount,
-      gas
-    })
-
-  if (gasEstimate == gas) {
-    throw new Error('Not enough enough gas, send more.')
-  }
-  return contract.methods
-    .depositToGateway(tokenId, amount)
-    .send({
-      from: ownerAccount,
-      gas: gasEstimate
-    })
-}
-
 async function getExtdevCoinContract(web3js) {
   const networkId = await web3js.eth.net.getId()
   return new web3js.eth.Contract(
@@ -353,15 +238,6 @@ async function getExtdevTokenContract(web3js) {
     MyTokenJSON.abi,
     MyTokenJSON.networks[networkId].address,
   )
-}
-
-async function getExtdevERC721XContract(web3js) {
-  const networkId = await web3js.eth.net.getId()
-  return new web3js.eth.Contract(
-    MyERC721XJSON.abi,
-    MyERC721XJSON.networks[networkId].address
-  )
-
 }
 
 async function getExtdevCoinBalance(web3js, accountAddress) {
@@ -522,6 +398,7 @@ async function depositTokenToExtdevGateway({
     .send({
       from: ownerExtdevAddress
     })
+  console.log('approved: ' + extdevGatewayAddress + 'to transfer' + tokenId)
 
   const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
   const receiveSignedWithdrawalEvent = new Promise((resolve, reject) => {
@@ -546,55 +423,6 @@ async function depositTokenToExtdevGateway({
 
   const tokenExtdevAddr = Address.fromString(`${client.chainId}:${tokenExtdevAddress}`)
   await gatewayContract.withdrawERC721Async(new BN(tokenId), tokenExtdevAddr, ownerRinkebyAddr)
-
-  const event = await receiveSignedWithdrawalEvent
-  return CryptoUtils.bytesToHexAddr(event.sig)
-}
-
-// Not tested yet.
-async function depositNFTToExtdevGateway({
-  client,
-  web3js,
-  tokenId,
-  ownerExtdevAddress,
-  ownerRinkebyAddress,
-  tokenExtdevAddress,
-  tokenRinkebyAddress,
-  timeout
-}) {
-  const ownerExtdevAddr = Address.fromString(`${client.chainId}:${ownerExtdevAddress}`)
-  const gatewayContract = await TransferGateway.createAsync(client, ownerExtdevAddr)
-
-  const coinContract = await getExtdevERC721XContract(web3js)
-  await coinContract.methods
-    .approve(extdevGatewayAddress.toLowerCase(), tokenId)
-    .send({
-      from: ownerExtdevAddress
-    })
-
-  const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
-  const receiveSignedWithdrawalEvent = new Promise((resolve, reject) => {
-    let timer = setTimeout(
-      () => reject(new Error('Timeout while waiting for withdrawal to be signed')),
-      timeout
-    )
-    const listener = event => {
-      const tokenEthAddr = Address.fromString(`eth:${tokenRinkebyAddress}`)
-      if (
-        event.tokenContract.toString() === tokenEthAddr.toString() &&
-        event.tokenOwner.toString() === ownerRinkebyAddr.toString()
-      ) {
-        clearTimeout(timer)
-        timer = null
-        gatewayContract.removeAllListeners(TransferGateway.EVENT_TOKEN_WITHDRAWAL)
-        resolve(event)
-      }
-    }
-    gatewayContract.on(TransferGateway.EVENT_TOKEN_WITHDRAWAL, listener)
-  })
-
-  const tokenExtdevAddr = Address.fromString(`${client.chainId}:${tokenExtdevAddress}`)
-  await gatewayContract.withdrawERC721X(new BN(tokenId), tokenExtdevAddr, ownerRinkebyAddr)
 
   const event = await receiveSignedWithdrawalEvent
   return CryptoUtils.bytesToHexAddr(event.sig)
@@ -673,7 +501,6 @@ async function withdrawEthFromRinkebyGateway({
 
 }
 
-//not tested yet
 async function withdrawTokenFromRinkebyGateway({
   web3js,
   tokenId,
@@ -705,41 +532,11 @@ async function withdrawTokenFromRinkebyGateway({
     })
 }
 
-//not tested yet
-async function withdrawNFTFromRinkebyGateway({
-  web3js,
-  tokenId,
-  accountAddress,
-  signature,
-  gas
-}) {
-  const gatewayContract = await getRinkebyGatewayContract(web3js)
-  const networkId = await web3js.eth.net.getId()
-
-  const gasEstimate = await gatewayContract.methods
-    .withdrawERC721X(tokenId, signature, MyRinkebyERC721XJSON.networks[networkId].address)
-    .estimateGas({
-      from: accountAddress,
-      gas
-    })
-
-  if (gasEstimate == gas) {
-    throw new Error('Not enough enough gas, send more.')
-  }
-
-  console.log('gasEstimate ' + gasEstimate)
-
-  return gatewayContract.methods
-    .withdrawERC721X(tokenId, signature, MyRinkebyTokenJSON.networks[networkId].address)
-    .send({
-      from: accountAddress,
-      gas: gasEstimate
-    })
-}
 
 function loadRinkebyAccount() {
   const privateKey = fs.readFileSync(path.join(__dirname, './rinkeby_private_key'), 'utf-8')
   const web3js = new Web3(`https://rinkeby.infura.io/${process.env.INFURA_API_KEY}`)
+
   const ownerAccount = web3js.eth.accounts.privateKeyToAccount('0x' + privateKey)
   web3js.eth.accounts.wallet.add(ownerAccount)
   return {
@@ -830,7 +627,7 @@ program
   .command('deposit-coin <amount>')
   .description('deposit the specified amount of ERC20 tokens into the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
-  .action(async function(amount, options) {
+  .action(async function (amount, options) {
     const {
       account,
       web3js
@@ -851,7 +648,7 @@ program
   .command('deposit-eth <amount>')
   .description('deposit the specified amount of ETH into the Transfer Gateway')
   .option("-u, --unit <ethUnit>", "eth unit")
-  .action(async function(amount, options) {
+  .action(async function (amount, options) {
     const {
       account,
       web3js
@@ -878,7 +675,7 @@ program
   .description('withdraw the specified amount of ERC20 tokens via the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
   .option("--timeout <number>", "Number of seconds to wait for withdrawal to be processed")
-  .action(async function(amount, options) {
+  .action(async function (amount, options) {
     let client
     try {
       const extdev = loadExtdevAccount()
@@ -922,7 +719,7 @@ program
   .option("-g, --gas <number>", "Gas for the tx")
   .option("-u, --unit <ethUnit>", "eth unit")
   .option("--timeout <number>", "Number of seconds to wait for withdrawal to be processed")
-  .action(async function(amount, options) {
+  .action(async function (amount, options) {
     let client
     let unit = options.unit
     let amountInEth
@@ -967,7 +764,7 @@ program
   .description('withdraw the specified ERC721 token via the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
   .option("--timeout <number>", "Number of seconds to wait for withdrawal to be processed")
-  .action(async function(uid, options) {
+  .action(async function (uid, options) {
     let client
     try {
       const extdev = loadExtdevAccount()
@@ -1005,13 +802,11 @@ program
     }
   })
 
-//not tested yet
 program
-  .command('withdraw-nft <uid>')
-  .description('withdraw the specified ERC721 token via the Transfer Gateway')
-  .option("-g, --gas <number>", "Gas for the tx")
+  .command('withdraw-erc721x <uid> <amount>')
+  .description('withdraw the specified ERC721X via the Transfer Gateway')
   .option("--timeout <number>", "Number of seconds to wait for withdrawal to be processed")
-  .action(async function(uid, options) {
+  .action(async function (uid, amount, options) {
     let client
     try {
       const extdev = loadExtdevAccount()
@@ -1020,25 +815,25 @@ program
 
       const rinkebyNetworkId = await rinkeby.web3js.eth.net.getId()
       const extdevNetworkId = await extdev.web3js.eth.net.getId()
-      //const signature = await depositTokenToExtdevGateway({
-      const signature = await depositNFTToExtdevGateway({
+      const signature = await erc721x.depositTokenToExtdevGateway({
         client: extdev.client,
         web3js: extdev.web3js,
         tokenId: uid,
         ownerExtdevAddress: extdev.account,
         ownerRinkebyAddress: rinkeby.account.address,
-        tokenExtdevAddress: MyERC721XJSON.networks[extdevNetworkId].address,
-        tokenRinkebyAddress: MyRinkebyERC721XJSON.networks[rinkebyNetworkId].address,
-        timeout: options.timeout ? (options.timeout * 1000) : 120000
+        tokenExtdevAddress: erc721x.ExtdevJSON.networks[extdevNetworkId].address,
+        tokenRinkebyAddress: erc721x.RinkebyJSON.networks[rinkebyNetworkId].address,
+        timeout: options.timeout ? (options.timeout * 1000) : 120000,
+        amount
       })
       console.log(`Token ${uid} deposited to DAppChain Gateway...`)
-      //const tx = await withdrawTokenFromRinkebyGateway({
-      const tx = await withdrawNFTFromRinkebyGateway({
+      const tx = await erc721x.withdrawTokenFromRinkebyGateway({
         web3js: rinkeby.web3js,
         tokenId: uid,
         accountAddress: rinkeby.account.address,
         signature,
-        gas: options.gas || 350000
+        gas: options.gas || 350000,
+        amount
       })
       console.log(`Token ${uid} withdrawn from Ethereum Gateway.`)
       console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
@@ -1055,7 +850,7 @@ program
   .command('resume-withdrawal')
   .description('attempt to complete a pending withdrawal via the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
-  .action(async function(options) {
+  .action(async function (options) {
     let client
     try {
       const extdev = loadExtdevAccount()
@@ -1118,7 +913,7 @@ program
   .description('display the current ERC20 token balance for an account')
   .option('-c, --chain <chain ID>', '"eth" for Rinkeby, "extdev" for PlasmaChain')
   .option('-a, --account <hex address> | gateway', 'Account address')
-  .action(async function(options) {
+  .action(async function (options) {
     try {
       let ownerAddress, balance
       if (options.chain === 'eth') {
@@ -1160,7 +955,7 @@ program
   .description('display the current ETH balance for an account')
   .option('-c, --chain <chain ID>', '"eth" for Rinkeby, "extdev" for PlasmaChain')
   .option('-a, --account <hex address> | gateway', 'Account address')
-  .action(async function(options) {
+  .action(async function (options) {
     try {
       let ownerAddress, balance, balanceInEth
       if (options.chain === 'eth') {
@@ -1204,7 +999,7 @@ program
   .command('deposit-token <uid>')
   .description('deposit an ERC721 token into the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
-  .action(async function(uid, options) {
+  .action(async function (uid, options) {
     const {
       account,
       web3js
@@ -1218,16 +1013,16 @@ program
   })
 
 program
-  .command('deposit-nft <uid>')
-  .description('deposit an ERC721X token into the Transfer Gateway')
+  .command('deposit-ft <uid> <amount>')
+  .description('deposit ERC721X ft into the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
-  .action(async function(uid, options) {
+  .action(async function (uid, amount, options) {
     const {
       account,
       web3js
     } = loadRinkebyAccount()
     try {
-      const tx = await depositNFTToGateway(web3js, uid, account.address, options.gas || 350000)
+      const tx = await erc721x.depositFTToGateway(web3js, uid, amount, account.address, options.gas || 350000)
       console.log(`Token ${uid} deposited, Rinkeby tx hash: ${tx.transactionHash}`)
     } catch (err) {
       console.error(err)
@@ -1235,16 +1030,16 @@ program
   })
 
 program
-  .command('deposit-ft <uid> <amount>')
-  .description('deposit ERC721X ft into the Transfer Gateway')
+  .command('deposit-nft <uid>')
+  .description('deposit an ERC721X token into the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
-  .action(async function(uid, amount, options) {
+  .action(async function (uid, options) {
     const {
       account,
       web3js
     } = loadRinkebyAccount()
     try {
-      const tx = await depositFTToGateway(web3js, uid, amount, account.address, options.gas || 350000)
+      const tx = await erc721x.depositNFTToGateway(web3js, uid, account.address, options.gas || 350000)
       console.log(`Token ${uid} deposited, Rinkeby tx hash: ${tx.transactionHash}`)
     } catch (err) {
       console.error(err)
@@ -1255,7 +1050,7 @@ program
   .command('mint-token <uid>')
   .description('mint an ERC721 token on Rinkeby')
   .option("-g, --gas <number>", "Gas for the tx")
-  .action(async function(uid, options) {
+  .action(async function (uid, options) {
     const {
       account,
       web3js
@@ -1270,15 +1065,15 @@ program
 
 program
   .command('mint-nft <uid>')
-  .description('mint an ERC721 token on Rinkeby')
+  .description('mint an ERC721X token on Rinkeby')
   .option("-g, --gas <number>", "Gas for the tx")
-  .action(async function(uid, options) {
+  .action(async function (uid, options) {
     const {
       account,
       web3js
     } = loadRinkebyAccount()
     try {
-      const tx = await mintNFT(web3js, uid, account.address, options.gas || 350000)
+      const tx = await erc721x.mintNFT(web3js, uid, account.address, options.gas || 350000)
       console.log(`Token ${uid} minted, Rinkeby tx hash: ${tx.transactionHash}`)
     } catch (err) {
       console.error(err)
@@ -1287,16 +1082,33 @@ program
 
 program
   .command('mint-ft <uid> <amount>')
-  .description('mint an ERC721 token on Rinkeby')
+  .description('mint an ERC721X token on Rinkeby')
   .option("-g, --gas <number>", "Gas for the tx")
-  .action(async function(uid, amount, options) {
+  .action(async function (uid, amount, options) {
     const {
       account,
       web3js
     } = loadRinkebyAccount()
     try {
-      const tx = await mintFT(web3js, uid, amount, account.address, options.gas || 350000)
+      const tx = await erc721x.mintFT(web3js, uid, amount, account.address, options.gas || 350000)
       console.log(`Token ${uid} minted, Rinkeby tx hash: ${tx.transactionHash}`)
+    } catch (err) {
+      console.error(err)
+    }
+  })
+
+program
+  .command('mint-ft-extdev <uid> <amount>')
+  .description('mint an ERC721X token on Extdev')
+  .option("-g, --gas <number>", "Gas for the tx")
+  .action(async function (uid, amount, options) {
+    const {
+      account,
+      web3js
+    } = loadExtdevAccount()
+    try {
+      const tx = await erc71x.mintFTExtdev(web3js, uid, amount, account, options.gas || 350000)
+      console.log(`Token ${uid} minted, Extdev tx hash: ${tx.transactionHash}`)
     } catch (err) {
       console.error(err)
     }
@@ -1307,7 +1119,7 @@ program
   .description('display the current ERC721 token balance for an account')
   .option('-c, --chain <chain ID>', '"eth" for Rinkeby, "extdev" for PlasmaChain')
   .option('-a, --account <hex address>', 'Account address')
-  .action(async function(options) {
+  .action(async function (options) {
     try {
       let ownerAddress, balance
       if (options.chain === 'eth') {
@@ -1322,7 +1134,7 @@ program
         const {
           indexes,
           balances
-        } = await getRinkebyERC721XBalance(web3js, ownerAddress)
+        } = await erc721x.getRinkebyBalance(web3js, ownerAddress)
         if (indexes && balances) {
           for (i = 0; i < indexes.length; i++) {
             console.log('Token id: ' + indexes[i] + ', balance: ' + balances[i])
@@ -1342,9 +1154,7 @@ program
           const {
             indexes,
             balances
-          } = await getExtdevERC721XBalance(web3js, ownerAddress)
-          console.log(indexes)
-          console.log(balances)
+          } = await erc721x.getExtdevBalance(web3js, ownerAddress)
           if (indexes && balances) {
             for (i = 0; i < indexes.length; i++) {
               console.log('Token id: ' + indexes[i] + ', balance: ' + balances[i])
@@ -1353,7 +1163,8 @@ program
         } catch (err) {
           throw err
         } finally {
-          client.disconnect()
+          if (client)
+            client.disconnect()
         }
       }
     } catch (err) {
@@ -1366,7 +1177,7 @@ program
   .description('display the current ERC721 token balance for an account')
   .option('-c, --chain <chain ID>', '"eth" for Rinkeby, "extdev" for PlasmaChain')
   .option('-a, --account <hex address>', 'Account address')
-  .action(async function(options) {
+  .action(async function (options) {
     try {
       let ownerAddress, balance
       if (options.chain === 'eth') {
@@ -1409,7 +1220,7 @@ program
 program
   .command('map-contracts <contract-type>')
   .description('maps contracts')
-  .action(async function(contractType, options) {
+  .action(async function (contractType, options) {
     let client
     try {
       const rinkeby = loadRinkebyAccount()
@@ -1458,7 +1269,7 @@ program
 program
   .command('map-accounts')
   .description('maps accounts')
-  .action(async function() {
+  .action(async function () {
     let client
     try {
       const rinkeby = loadRinkebyAccount()

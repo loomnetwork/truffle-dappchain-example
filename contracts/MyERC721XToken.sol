@@ -1,7 +1,7 @@
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
 
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "erc721x/contracts/Core/ERC721X/ERC721XToken.sol";
-import "erc721x/contracts/Libraries/ObjectsLib.sol";
 
 contract MyERC721XToken is ERC721XToken {
     using SafeMath for uint256;
@@ -24,6 +24,22 @@ contract MyERC721XToken is ERC721XToken {
         gateway = _gateway;
     }
 
+    function mintTokens(address _to, uint256 _tokenId, uint256 _amount) external {
+        require(msg.sender == ownerOf(_tokenId));
+        uint256 supply = balanceOf(_to, _tokenId);
+        _mint(_tokenId, _to, supply.add(_amount));
+    }
+
+    // fungible mint
+    function mint(uint256 _tokenId, address _to, uint256 _supply) external {
+        _mint(_tokenId, _to, _supply);
+    }
+
+    // nft mint
+    function mint(uint256 _tokenId, address _to) external {
+        _mint(_tokenId, _to);
+    }
+
     // Mints the requested amount of the given fungible token type, and transfers ownership to the Gateway
     function mintToGateway(uint256 _tokenId, uint256 _amount) public
     {
@@ -36,6 +52,14 @@ contract MyERC721XToken is ERC721XToken {
     {
         require(msg.sender == gateway, "only the gateway is allowed to mint");
         _mint(_uid, gateway);
+    }
+
+    function depositToGatewayNFT(uint256 _tokenId) public {
+        safeTransferFrom(msg.sender, gateway, _tokenId);
+    }
+
+    function depositToGatewayFT(uint256 _tokenId, uint256 amount) public {
+        safeTransferFrom(msg.sender, gateway, _tokenId, amount);
     }
 
     // This is a workaround for go-ethereum's abigen not being able to handle function overloads.
