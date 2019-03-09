@@ -2,6 +2,7 @@ const { readFileSync } = require('fs')
 const path = require('path')
 const { join } = require('path')
 const LoomTruffleProvider = require('loom-truffle-provider')
+const { LoomProvider } = require('loom-js')
 const HDWalletProvider = require('truffle-hdwallet-provider')
 
 module.exports = {
@@ -22,7 +23,7 @@ module.exports = {
         loomTruffleProvider.createExtraAccountsFromMnemonic("gravity top burden flip student usage spell purchase hundred improve check genre", 10)
         return loomTruffleProvider
       },
-      network_id: '*'
+      network_id: LoomProvider.chainIdToNetVersion('default')
     },
     loomv2b: {
       provider: function() {
@@ -32,7 +33,7 @@ module.exports = {
         const readUrl = 'http://loomv2b.dappchains.com:46658/query'
         return new LoomTruffleProvider(chainId, writeUrl, readUrl, privateKey)
       },
-      network_id: '12106039541279'
+      network_id: LoomProvider.chainIdToNetVersion('loomv2b')
     },
     extdev_plasma_us1: {
       provider: function() {
@@ -42,7 +43,7 @@ module.exports = {
         const readUrl = 'http://extdev-plasma-us1.dappchains.com:80/query'
         return new LoomTruffleProvider(chainId, writeUrl, readUrl, privateKey)
       },
-      network_id: '9545242630824'
+      network_id: LoomProvider.chainIdToNetVersion('extdev-plasma-us1')
     },
     rinkeby: {
       provider: function() {

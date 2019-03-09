@@ -81,7 +81,7 @@ export default class Contract {
   }
 
   async _getCurrentNetwork() {
-    return Promise.resolve('default')
+    return await this.web3.eth.net.getId()
   }
 
   async setValue(value) {
