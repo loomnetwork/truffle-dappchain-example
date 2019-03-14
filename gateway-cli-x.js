@@ -505,22 +505,6 @@ program
     }
   })
 
-  program
-    .command('mint-ft <uid> <amount>')
-    .description('mint an ERC721X token on Extdev')
-    .action(async function (uid, amount, options) {
-      const {
-        account,
-        web3js
-      } = common.loadExtdevAccount()
-      try {
-        const tx = await erc721x.mintFT(web3js, uid, amount, account)
-        console.log(`Token ${uid} minted, Rinkeby tx hash: ${tx.transactionHash}`)
-      } catch (err) {
-        console.error(err)
-      }
-    })
-
 program
   .command('mint-ft-reverse <uid> <amount>')
   .description('mint an ERC721X token on Extdev')
