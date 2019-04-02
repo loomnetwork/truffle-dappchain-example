@@ -50,7 +50,7 @@ module.exports = {
         if (!process.env.INFURA_API_KEY) {
           throw new Error("INFURA_API_KEY env var not set")
         }
-        return new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${process.env.INFURA_API_KEY}`, 0, 10)
+        return new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`, 0, 10)
       },
       network_id: 4,
       gasPrice: 15000000001,
