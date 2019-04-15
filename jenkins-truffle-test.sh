@@ -78,13 +78,13 @@ for i in `seq 1 ${REPEAT}`; do
   echo "Running loop $i..."
   echo "==================================="
   echo ""
-  
+
   if [ "${CLUSTER}" != "extdev-plasma-us1.dappchains.com" ] || [ "${CLUSTER}" != "plasma.dappchains.com" ]; then
     ./loom genkey -k private_key -a public_key
   elif [ "${CLUSTER}" = "extdev-plasma-us1.dappchains.com" ]; then
-    cat whitelist-keys/extdev-cluster-whitelist.txt
+    cat extdev-cluster-whitelist.txt
   elif [ "${CLUSTER}" = "plasma.dappchains.com" ]; then
-    cat whitelist-keys/plasma-cluster-whitelist.txt
+    cat plasma-cluster-whitelist.txt
   fi
 
   yarn deploy
