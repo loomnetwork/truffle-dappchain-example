@@ -13,7 +13,11 @@
     "test:extdev": "truffle test --network extdev_plasma_us1",
     "serve": "webpack-dev-server --hot --content-base ./dist",
     "serve:extdev": "NETWORK=extdev yarn run serve",
-    "gen:rinkeby-key": "node ./scripts/gen-eth-key.js rinkeby"
+    "gen:rinkeby-key": "node ./scripts/gen-eth-key.js rinkeby",
+    "get:loom": "if [ ! -d loom ]; then mkdir loom && cd loom && curl https://raw.githubusercontent.com/loomnetwork/loom-sdk-documentation/master/scripts/get_loom.sh | sh && chmod +x ./loom && cd ..; fi",
+    "gen:extdev-key": "npm run get:loom && ./loom/loom genkey -k extdev_private_key -a extdev_public_key",
+    "gen:loom-key": "npm run get:loom && ./loom/loom genkey -k loom_private_key -a loom_public_key",
+    "loom:init": "loom/loom init -f && loom/loom run"
   },
   "dependencies": {
     "bip39": "^2.5.0",

@@ -14,7 +14,7 @@ module.exports = {
   networks: {
     loom_dapp_chain: {
       provider: function() {
-        const privateKey = readFileSync(path.join(__dirname, 'private_key'), 'utf-8')
+        const privateKey = readFileSync(path.join(__dirname, 'loom_private_key'), 'utf-8')
         const chainId = 'default'
         const writeUrl = 'http://127.0.0.1:46658/rpc'
         const readUrl = 'http://127.0.0.1:46658/query'
@@ -50,7 +50,7 @@ module.exports = {
         if (!process.env.INFURA_API_KEY) {
           throw new Error("INFURA_API_KEY env var not set")
         }
-        return new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${process.env.INFURA_API_KEY}`, 0, 10)
+        return new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`, 0, 10)
       },
       network_id: 4,
       gasPrice: 15000000001,
