@@ -80,7 +80,7 @@ async function depositCoinToRinkebyGateway(web3js, amount, ownerAccount, gas) {
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
   }
-  
+
   return gateway.methods
     .depositERC20(amount.toString(), contractAddress)
     .send({ from: ownerAccount, gas: gasEstimate })
@@ -94,7 +94,7 @@ async function depositEthToRinkebyGateway(web3js, amount, unit, ownerAccount) {
   // the destination address
   const addressTo = rinkebyGatewayAddress
 
-  // Signs the given transaction data and sends it. Abstracts some of the details 
+  // Signs the given transaction data and sends it. Abstracts some of the details
   // of buffering and serializing the transaction for web3.
   async function sendSigned(txData, cb) {
     const privateKey = new Buffer(privKey, 'hex')
@@ -127,7 +127,7 @@ async function depositEthToRinkebyGateway(web3js, amount, unit, ownerAccount) {
     if (err) return console.log('error', err)
     console.log('sent', result)
   })
-  
+
 }
 
 async function getRinkebyTokenContract(web3js) {
@@ -173,7 +173,7 @@ async function mintToken(web3js, tokenId, ownerAccount, gas) {
 
 async function depositTokenToGateway(web3js, tokenId, ownerAccount, gas) {
   const contract = await getRinkebyTokenContract(web3js)
-  
+
   const gasEstimate = await contract.methods
     .depositToGateway(rinkebyGatewayAddress, tokenId)
     .estimateGas({ from: ownerAccount, gas })
@@ -244,12 +244,12 @@ async function depositCoinToExtdevGateway({
 }) {
   const ownerExtdevAddr = Address.fromString(`${client.chainId}:${ownerExtdevAddress}`)
   const gatewayContract = await TransferGateway.createAsync(client, ownerExtdevAddr)
-  
+
   const coinContract = await getExtdevCoinContract(web3js)
   await coinContract.methods
     .approve(extdevGatewayAddress.toLowerCase(), amount.toString())
     .send({ from: ownerExtdevAddress })
-  
+
   const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
   const receiveSignedWithdrawalEvent = new Promise((resolve, reject) => {
     let timer = setTimeout(
@@ -292,7 +292,7 @@ async function depositEthToExtdevGateway({
   const ethCoin = await EthCoin.createAsync(client, ownerExtdevAddr);
   const extdevGatewayAddr = Address.fromString(`${client.chainId}:${extdevGatewayAddress}`)
   await ethCoin.approveAsync(extdevGatewayAddr, new BN(amount))
-  
+
   const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
   const rinkebyGatewayAddr = Address.fromString(`eth:${rinkebyGatewayAddress}`)
 
@@ -331,12 +331,12 @@ async function depositTokenToExtdevGateway({
 }) {
   const ownerExtdevAddr = Address.fromString(`${client.chainId}:${ownerExtdevAddress}`)
   const gatewayContract = await TransferGateway.createAsync(client, ownerExtdevAddr)
-  
+
   const coinContract = await getExtdevTokenContract(web3js)
   await coinContract.methods
     .approve(extdevGatewayAddress.toLowerCase(), tokenId)
     .send({ from: ownerExtdevAddress })
-  
+
   const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
   const receiveSignedWithdrawalEvent = new Promise((resolve, reject) => {
     let timer = setTimeout(
@@ -395,7 +395,7 @@ async function withdrawCoinFromRinkebyGateway({ web3js, amount, accountAddress, 
   return gatewayContract.methods
     .withdrawERC20(amount.toString(), signature, MyRinkebyCoinJSON.networks[networkId].address)
     .send({ from: accountAddress, gas: gasEstimate })
-  
+
 }
 
 async function withdrawEthFromRinkebyGateway({ web3js, amount, accountAddress, signature, gas }) {
@@ -412,7 +412,7 @@ async function withdrawEthFromRinkebyGateway({ web3js, amount, accountAddress, s
   return gatewayContract.methods
     .withdrawETH(amount.toString(), signature)
     .send({ from: accountAddress, gas: gasEstimate })
-  
+
 }
 
 async function withdrawTokenFromRinkebyGateway({ web3js, tokenId, accountAddress, signature, gas }) {
@@ -456,7 +456,7 @@ function loadExtdevAccount() {
   client.on('error', msg => {
     console.error('PlasmaChain connection error', msg)
   })
- 
+
   return {
     account: LocalAddress.fromPublicKey(publicKey).toString(),
     web3js: new Web3(new LoomProvider(client, privateKey)),
@@ -476,7 +476,7 @@ async function mapContracts({
   const gatewayContract = await TransferGateway.createAsync(client, ownerExtdevAddr)
   const foreignContract = Address.fromString(`eth:${tokenRinkebyAddress}`)
   const localContract = Address.fromString(`${client.chainId}:${tokenExtdevAddress}`)
-  
+
   const hash = soliditySha3(
     { type: 'address', value: tokenRinkebyAddress.slice(2) },
     { type: 'address', value: tokenExtdevAddress.slice(2) }
@@ -497,7 +497,7 @@ async function mapAccounts({ client, signer, ownerRinkebyAddress, ownerExtdevAdd
   const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
   const ownerExtdevAddr = Address.fromString(`${client.chainId}:${ownerExtdevAddress}`)
   const mapperContract = await AddressMapper.createAsync(client, ownerExtdevAddr)
-  
+
   try {
     const mapping = await mapperContract.getMappingAsync(ownerExtdevAddr)
     console.log(`${mapping.from.toString()} is already mapped to ${mapping.to.toString()}`)
@@ -539,7 +539,7 @@ program
       if(options.unit == null) {
         unit = 'wei'
       }
-      
+
       const tx = await depositEthToRinkebyGateway(
         web3js, amount, unit, account
       )
@@ -700,7 +700,7 @@ program
       const myRinkebyGatewayAddress = Address.fromString(`eth:${rinkebyGatewayAddress}`)
       const receipt = await getPendingWithdrawalReceipt(extdev.client, extdev.account)
       const signature = CryptoUtils.bytesToHexAddr(receipt.oracleSignature)
-      
+
       if (receipt.tokenContract.toString() === myRinkebyCoinAddress.toString()) {
         const tx = await withdrawCoinFromRinkebyGateway({
           web3js: rinkeby.web3js,
@@ -792,7 +792,7 @@ program
       if (options.chain === 'eth') {
         const { account, web3js } = loadRinkebyAccount()
         ownerAddress = account.address
-        
+
         if (options.account) {
           ownerAddress = (options.account === 'gateway') ? rinkebyGatewayAddress : options.account
         }
@@ -910,7 +910,7 @@ program
         console.log('Specify which contracts you wish to map, "coin" or "token"')
         return
       }
-      
+
       const signer = new OfflineWeb3Signer(rinkeby.web3js, rinkeby.account)
       await mapContracts({
         client,

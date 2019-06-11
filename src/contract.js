@@ -20,7 +20,6 @@ export default class Contract {
     let writeUrl = 'ws://127.0.0.1:46658/websocket'
     let readUrl = 'ws://127.0.0.1:46658/queryws'
     let networkId = 'default'
-
     if (process.env.NETWORK == 'extdev') {
       writeUrl = 'ws://extdev-plasma-us1.dappchains.com:80/websocket'
       readUrl = 'ws://extdev-plasma-us1.dappchains.com:80/queryws'
@@ -46,7 +45,6 @@ export default class Contract {
   async _createContractInstance() {
     const networkId = await this._getCurrentNetwork()
     this.currentNetwork = SimpleStore.networks[networkId]
-
     if (!this.currentNetwork) {
       throw Error('Contract not deployed on DAppChain')
     }
@@ -81,7 +79,13 @@ export default class Contract {
   }
 
   async _getCurrentNetwork() {
-    return Promise.resolve('default')
+
+    if (process.env.NETWORK == 'extdev') {
+      return Promise.resolve('9545242630824')
+    }
+    else {
+      return Promise.resolve('default') //TODO: replace this with your network id
+    }
   }
 
   async setValue(value) {
