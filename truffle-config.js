@@ -1,8 +1,13 @@
 const { readFileSync } = require('fs')
 const path = require('path')
 const { join } = require('path')
-const LoomTruffleProvider = require('loom-truffle-provider')
+const { LoomTruffleProvider } = require('loom-truffle-provider')
 const HDWalletProvider = require('truffle-hdwallet-provider')
+const { sha256 } = require ('js-sha256')
+const { CryptoUtils } = require ('loom-js')
+const { mnemonicToSeedSync } = require ('bip39')
+
+const mnemonic = 'YOUR MNEMONIC'
 
 module.exports = {
   contracts_build_directory: join(__dirname, './src/contracts'),
@@ -43,6 +48,18 @@ module.exports = {
         return new LoomTruffleProvider(chainId, writeUrl, readUrl, privateKey)
       },
       network_id: '9545242630824'
+    },
+    loom_mainnet: {
+      provider: function () {
+        const chainId = 'default'
+        const writeUrl = 'http://plasma.dappchains.com/rpc'
+        const readUrl = 'http://plasma.dappchains.com/query'
+        const seed = mnemonicToSeedSync(mnemonic)
+        const privateKeyUint8ArrayFromSeed = CryptoUtils.generatePrivateKeyFromSeed(new Uint8Array(sha256.array(seed)))
+        const privateKeyB64 = CryptoUtils.Uint8ArrayToB64(privateKeyUint8ArrayFromSeed)
+        return new LoomTruffleProvider(chainId, writeUrl, readUrl, privateKeyB64)
+      },
+      network_id: '*'
     },
     rinkeby: {
       provider: function() {
