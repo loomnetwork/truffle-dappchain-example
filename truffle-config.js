@@ -1,13 +1,13 @@
 const { readFileSync } = require('fs')
 const path = require('path')
 const { join } = require('path')
-const { LoomTruffleProvider } = require('loom-truffle-provider')
+const LoomTruffleProvider  = require ('loom-truffle-provider')
 const HDWalletProvider = require('truffle-hdwallet-provider')
 const { sha256 } = require ('js-sha256')
 const { CryptoUtils } = require ('loom-js')
 const { mnemonicToSeedSync } = require ('bip39')
 
-const mnemonic = 'YOUR MNEMONIC'
+const mnemonic = readFileSync(path.join(__dirname, 'loom_mnemonic'), 'utf-8')
 
 module.exports = {
   contracts_build_directory: join(__dirname, './src/contracts'),
