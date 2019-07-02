@@ -7,8 +7,6 @@ const { sha256 } = require ('js-sha256')
 const { CryptoUtils } = require ('loom-js')
 const { mnemonicToSeedSync } = require ('bip39')
 
-const mnemonic = readFileSync(path.join(__dirname, 'loom_mnemonic'), 'utf-8')
-
 module.exports = {
   contracts_build_directory: join(__dirname, './src/contracts'),
   compilers: {
@@ -51,6 +49,7 @@ module.exports = {
     },
     loom_mainnet: {
       provider: function () {
+        const mnemonic = readFileSync(path.join(__dirname, 'loom_mnemonic'), 'utf-8').toString().trim()
         const chainId = 'default'
         const writeUrl = 'http://plasma.dappchains.com/rpc'
         const readUrl = 'http://plasma.dappchains.com/query'
