@@ -18,3 +18,5 @@ loom_private_key
 loom_pub_key
 loom_public_key
 loom_mnemonic
+extdev_mnemonic
+mainnet_mnemonic
