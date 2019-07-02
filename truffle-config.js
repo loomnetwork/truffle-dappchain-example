@@ -36,14 +36,13 @@ module.exports = {
         const chainId = 'default'
         const writeUrl = 'http://127.0.0.1:46658/rpc'
         const readUrl = 'http://127.0.0.1:46658/query'
-        const mnemonicPath = path.join(__dirname, 'local_mnemonic')
-        const privateKeyPath = path.join(__dirname, 'local_pk')
+        const mnemonicPath = path.join(__dirname, 'loom_mnemonic')
+        const privateKeyPath = path.join(__dirname, 'loom_private_key')
         if (fs.existsSync(privateKeyPath)) {
           const loomTruffleProvider = getLoomProviderWithPrivateKey(privateKeyPath, chainId, writeUrl, readUrl)
           loomTruffleProvider.createExtraAccountsFromMnemonic("gravity top burden flip student usage spell purchase hundred improve check genre", 10)
           return loomTruffleProvider
-        }
-        else if (fs.existsSync(mnemonicPath)) {
+        } else if (fs.existsSync(mnemonicPath)) {
           const loomTruffleProvider = getLoomProviderWithMnemonic(mnemonicPath, chainId, writeUrl, readUrl)
           return loomTruffleProvider
         }
@@ -60,8 +59,7 @@ module.exports = {
         if (fs.existsSync(privateKeyPath)) {
           const loomTruffleProvider = getLoomProviderWithPrivateKey(privateKeyPath, chainId, writeUrl, readUrl)
           return loomTruffleProvider
-        }
-        else if (fs.existsSync(mnemonicPath)) {
+        } else if (fs.existsSync(mnemonicPath)) {
           const loomTruffleProvider = getLoomProviderWithMnemonic(mnemonicPath, chainId, writeUrl, readUrl)
           return loomTruffleProvider
         }
@@ -78,8 +76,7 @@ module.exports = {
         if (fs.existsSync(privateKeyPath)) {
           const loomTruffleProvider = getLoomProviderWithPrivateKey(privateKeyPath, chainId, writeUrl, readUrl)
           return loomTruffleProvider
-        }
-        else if (fs.existsSync(mnemonicPath)) {
+        } else if (fs.existsSync(mnemonicPath)) {
           const loomTruffleProvider = getLoomProviderWithMnemonic(mnemonicPath, chainId, writeUrl, readUrl)
           return loomTruffleProvider
         }
@@ -96,8 +93,7 @@ module.exports = {
         if (fs.existsSync(privateKeyPath)) {
           const loomTruffleProvider = getLoomProviderWithPrivateKey(privateKeyPath, chainId, writeUrl, readUrl)
           return loomTruffleProvider
-        }
-        else if (fs.existsSync(mnemonicPath)) {
+        } else if (fs.existsSync(mnemonicPath)) {
           const loomTruffleProvider = getLoomProviderWithMnemonic(mnemonicPath, chainId, writeUrl, readUrl)
           return loomTruffleProvider
         }
@@ -114,12 +110,10 @@ module.exports = {
         if (fs.existsSync(privateKeyPath)) {
           const privateKey = readFileSync(path.join(__dirname, 'rinkeby_private_key'), 'utf-8')
           return new PrivateKeyProvider(privateKey, `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`, 0, 10)
-        }
-        else if (fs.existsSync(mnemonicPath)) {
+        } else if (fs.existsSync(mnemonicPath)) {
           const mnemonic = readFileSync(path.join(__dirname, 'rinkeby_mnemonic'), 'utf-8')
           return new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`, 0, 10)
         }
-
       },
       network_id: 4,
       gasPrice: 15000000001,
