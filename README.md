@@ -11,7 +11,7 @@ This simple example shows how you can use `Truffle` and the [Loom Truffle Provid
 Make sure the following requirements are met and then follow the steps in the next section:
 
 ```text
-Node >= 8
+Recommended Node version v10.15.3
 yarn or npm
 ```
 
