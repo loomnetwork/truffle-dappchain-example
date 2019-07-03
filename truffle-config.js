@@ -75,6 +75,8 @@ module.exports = {
         const privateKeyPath = path.join(__dirname, 'extdev_private_key')
         if (fs.existsSync(privateKeyPath)) {
           const loomTruffleProvider = getLoomProviderWithPrivateKey(privateKeyPath, chainId, writeUrl, readUrl)
+          // use a dummy mnemonic to create a bunch of accounts we'll use for testing purposes
+          loomTruffleProvider.createExtraAccountsFromMnemonic("gravity top burden flip student usage spell purchase hundred improve check genre", 10)
           return loomTruffleProvider
         } else if (fs.existsSync(mnemonicPath)) {
           const loomTruffleProvider = getLoomProviderWithMnemonic(mnemonicPath, chainId, writeUrl, readUrl)
