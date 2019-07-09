@@ -97,7 +97,7 @@ yarn gen:extdev-key
 In a new terminal, run:
 
 ```bash
-yarn loom-init
+yarn loom:init
 ```
 
 ### Deploy the smart contract
