@@ -1,7 +1,7 @@
 import {
   Client, LocalAddress, CryptoUtils, LoomProvider
 } from 'loom-js'
-
+import BN from 'bn.js'
 import Web3 from 'web3'
 import SimpleStore from './contracts/SimpleStore.json'
 
@@ -78,13 +78,18 @@ export default class Contract {
     this.onEvent = fn
   }
 
-  async _getCurrentNetwork() {
+  _getCurrentNetwork() {
 
     if (process.env.NETWORK == 'extdev') {
-      return Promise.resolve('9545242630824')
+      return '9545242630824'
     }
     else {
-      return Promise.resolve('default') //TODO: replace this with your network id
+      const web3 = new Web3()
+      const chainIdHash = web3.utils.soliditySha3(this.client.chainId)
+        .slice(2) // Removes 0x
+        .slice(0, 13) // Produces safe Number less than 9007199254740991
+        const chainId =  new BN(chainIdHash).toString()
+      return chainId
     }
   }
 
