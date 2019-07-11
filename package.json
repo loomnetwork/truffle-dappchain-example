@@ -17,11 +17,12 @@
     "get:loom": "if [ ! -d loom ]; then mkdir loom && cd loom && curl https://raw.githubusercontent.com/loomnetwork/loom-sdk-documentation/master/scripts/get_loom.sh | sh && chmod +x ./loom && cd ..; fi",
     "gen:extdev-key": "npm run get:loom && ./loom/loom genkey -k extdev_private_key -a extdev_public_key",
     "gen:loom-key": "npm run get:loom && ./loom/loom genkey -k loom_private_key -a loom_public_key",
-    "loom:init": "loom/loom init -f && loom/loom run"
+    "loom:init": "cd loom && chmod +x loom && ./loom init -f && cd ..",
+    "loom:run": "cd loom && ./loom run && cd .."
   },
   "dependencies": {
     "bip39": "^3.0.2",
-    "bn.js": "^4.11.8",
+    "bn.js": "4.11.8",
     "commander": "^2.18.0",
     "ethereumjs-tx": "^1.3.7",
     "ethereumjs-wallet": "^0.6.2",

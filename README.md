@@ -45,7 +45,7 @@ The following command will download the `loom` binary and generate the private k
 yarn gen:extdev-key
 ```
 
-> The Loom private key will be saved into a file called `extdev_private_key`.
+This will download the loom binary and generate a private key. The private key will be saved into a file called `extdev_private_key`.
 
 
 ### Deploy to extdev_plasma_us1
@@ -89,8 +89,10 @@ yarn serve:extdev
 First, you have to generate a private key using:
 
 ```bash
-yarn gen:extdev-key
+yarn gen:loom-key
 ```
+
+This will download the loom binary and write a private key to a file called  `loom_private_key`
 
 ### Spin up Loom Chain
 
@@ -98,6 +100,12 @@ In a new terminal, run:
 
 ```bash
 yarn loom:init
+```
+
+and then:
+
+```bash
+yarn loom:run
 ```
 
 ### Deploy the smart contract
@@ -108,47 +116,20 @@ To deploy, run the following command:
 yarn deploy
 ```
 
-You will see something like this:
-
-```text
-Starting migrations...
-======================
-> Network name:    'loom_dapp_chain'
-> Network id:      13654820909954
-> Block gas limit: 0
-```
-
-Copy the `Network id` paste it into a text file. We'll use it later.
-
 ### Test
 
-```
+
+```bash
 yarn test
 ```
 
 ## Web interface
-
-Open the `src/contract.js` file in your text editor of choice and go to line 87.
-
-Now, say your `Network id` is `13654820909954`. Replace
-
-```javascript
-return Promise.resolve('default')
-```
-
-with
-
-```javascript
-return Promise.resolve('13654820909954')
-```
-
 
 We're ready to start the web server. In a new terminal, run:
 
 ```bash
 yarn serve
 ```
-
 
 ## Useful information
 
