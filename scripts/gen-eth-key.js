@@ -23,7 +23,7 @@ if (mnemonic) {
     mnemonic = bip39.generateMnemonic()
 }
 
-const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeed(mnemonic))
+const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(mnemonic))
 const wallet_hdpath = "m/44'/60'/0'/0/"
 
 const wallet = hdwallet.derivePath(wallet_hdpath + '0').getWallet()
