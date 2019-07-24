@@ -23,7 +23,7 @@ contract BEP2TokenTemplate is MintableToken {
         totalSupply_ = totalSupply_.add(_amount);
         balances[msg.sender] = balances[msg.sender].add(_amount);
         emit Mint(msg.sender, _amount);
-        emit Transfer(this, msg.sender, _amount);
+        emit Transfer(address(0), msg.sender, _amount);
     }
 
     // Overloaded `mint` function of Mintable token for onlyValidator
