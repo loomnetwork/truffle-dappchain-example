@@ -12,7 +12,7 @@ Make sure the following requirements are met and then follow the steps in the ne
 
 ```text
 Recommended Node version v10.15.3
-yarn or npm
+yarn
 ```
 
 ## Install
