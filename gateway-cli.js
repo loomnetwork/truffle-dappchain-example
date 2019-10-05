@@ -5,25 +5,25 @@ const fs = require('fs')
 const path = require('path')
 const {
     Client, NonceTxMiddleware, SignedTxMiddleware, Address, LocalAddress, CryptoUtils, LoomProvider,
-    Contracts, Web3Signer, soliditySha3
+    Contracts, createEthereumGatewayAsync, soliditySha3
 } = require('loom-js')
 // TODO: fix this export in loom-js
 const { OfflineWeb3Signer } = require('loom-js/dist/solidity-helpers')
 const BN = require('bn.js')
+const { ethers } = require('ethers')
 
 const MyRinkebyTokenJSON = require('./src/contracts/MyRinkebyToken.json')
 const MyRinkebyCoinJSON = require('./src/contracts/MyRinkebyCoin.json')
 const MyTokenJSON = require('./src/contracts/MyToken.json')
 const MyCoinJSON = require('./src/contracts/MyCoin.json')
-const RinkebyGatewayJSON = require('./src/Gateway.json')
 
 const TransferGateway = Contracts.TransferGateway
 const AddressMapper = Contracts.AddressMapper
 const EthCoin = Contracts.EthCoin
 
-// See https://loomx.io/developers/docs/en/testnet-plasma.html#contract-addresses-transfer-gateway
+// See https://loomx.io/developers/en/testnet-plasma.html#ethereum-integration
 // for the most up to date address.
-const rinkebyGatewayAddress = '0xb73C9506cb7f4139A4D6Ac81DF1e5b6756Fab7A2'
+const rinkebyGatewayAddress = '0x9c67fD4eAF0497f9820A3FBf782f81D6b6dC4Baa'
 const extdevGatewayAddress = '0xE754d9518bF4a9C63476891eF9Aa7D91c8236a5d'
 const extdevChainId = 'extdev-plasma-us1'
 
@@ -71,19 +71,8 @@ async function depositCoinToRinkebyGateway(web3js, amount, ownerAccount, gas) {
   await contract.methods
     .approve(rinkebyGatewayAddress, amount.toString())
     .send({ from: ownerAccount, gas: gasEstimate })
-
-  gasEstimate = await gateway.methods
-    .depositERC20(amount.toString(), contractAddress)
-    .estimateGas({ from: ownerAccount, gas })
-      console.log(gasEstimate)
-
-  if (gasEstimate == gas) {
-    throw new Error('Not enough enough gas, send more.')
-  }
-
-  return gateway.methods
-    .depositERC20(amount.toString(), contractAddress)
-    .send({ from: ownerAccount, gas: gasEstimate })
+  
+  return gateway.depositERC20Async(amount, contractAddress, { gasLimit: gas })
 }
 
 async function depositEthToRinkebyGateway(web3js, amount, unit, ownerAccount) {
@@ -235,8 +224,8 @@ async function getExtdevTokenBalance(web3js, accountAddress) {
   return { total, tokens }
 }
 
-// Returns a promise that will be resolved with a hex string containing the signature that must
-// be submitted to the Ethereum Gateway to withdraw a token.
+// Returns a promise that will be resolved with the signed withdrawal receipt that contains the
+// data that must be submitted to the Ethereum Gateway to withdraw ERC20 tokens.
 async function depositCoinToExtdevGateway({
   client, web3js, amount,
   ownerExtdevAddress, ownerRinkebyAddress,
@@ -275,12 +264,12 @@ async function depositCoinToExtdevGateway({
   await gatewayContract.withdrawERC20Async(amount, tokenExtdevAddr, ownerRinkebyAddr)
   console.log(`${amount.div(coinMultiplier).toString()} tokens deposited to DAppChain Gateway...`)
 
-  const event = await receiveSignedWithdrawalEvent
-  return CryptoUtils.bytesToHexAddr(event.sig)
+  await receiveSignedWithdrawalEvent
+  return gatewayContract.withdrawalReceiptAsync(ownerExtdevAddr)
 }
 
-// Returns a promise that will be resolved with a hex string containing the signature that must
-// be submitted to the Ethereum Gateway to withdraw a eth.
+// Returns a promise that will be resolved with the signed withdrawal receipt that contains the
+// data that must be submitted to the Ethereum Gateway to withdraw ETH.
 async function depositEthToExtdevGateway({
   client, amount,
   ownerExtdevAddress, ownerRinkebyAddress,
@@ -318,12 +307,12 @@ async function depositEthToExtdevGateway({
   await gatewayContract.withdrawETHAsync(new BN(amount), rinkebyGatewayAddr, ownerRinkebyAddr)
   console.log(`${amount.toString()} wei deposited to DAppChain Gateway...`)
 
-  const event = await receiveSignedWithdrawalEvent
-  return CryptoUtils.bytesToHexAddr(event.sig)
+  await receiveSignedWithdrawalEvent
+  return gatewayContract.withdrawalReceiptAsync(ownerExtdevAddr)
 }
 
-// Returns a promise that will be resolved with a hex string containing the signature that must
-// be submitted to the Ethereum Gateway to withdraw a token.
+// Returns a promise that will be resolved with the signed withdrawal receipt that contains the
+// data that must be submitted to the Ethereum Gateway to withdraw an ERC721 token.
 async function depositTokenToExtdevGateway({
   client, web3js, tokenId,
   ownerExtdevAddress, ownerRinkebyAddress,
@@ -361,8 +350,8 @@ async function depositTokenToExtdevGateway({
   const tokenExtdevAddr = Address.fromString(`${client.chainId}:${tokenExtdevAddress}`)
   await gatewayContract.withdrawERC721Async(new BN(tokenId), tokenExtdevAddr, ownerRinkebyAddr)
 
-  const event = await receiveSignedWithdrawalEvent
-  return CryptoUtils.bytesToHexAddr(event.sig)
+  await receiveSignedWithdrawalEvent
+  return gatewayContract.withdrawalReceiptAsync(ownerExtdevAddr)
 }
 
 async function getPendingWithdrawalReceipt(client, ownerAddress) {
@@ -372,69 +361,30 @@ async function getPendingWithdrawalReceipt(client, ownerAddress) {
 }
 
 async function getRinkebyGatewayContract(web3js) {
-  const networkId = await web3js.eth.net.getId()
-  return new web3js.eth.Contract(
-    RinkebyGatewayJSON.abi,
-    RinkebyGatewayJSON.networks[networkId].address
+  return createEthereumGatewayAsync(
+    rinkebyGatewayAddress,
+    new ethers.providers.Web3Provider(web3js.currentProvider)
   )
 }
 
-
-async function withdrawCoinFromRinkebyGateway({ web3js, amount, accountAddress, signature, gas }) {
+async function withdrawCoinFromRinkebyGateway({ web3js, receipt, gas }) {
   const gatewayContract = await getRinkebyGatewayContract(web3js)
-  const networkId = await web3js.eth.net.getId()
-
-  const gasEstimate = await gatewayContract.methods
-    .withdrawERC20(amount.toString(), signature, MyRinkebyCoinJSON.networks[networkId].address)
-    .estimateGas({ from: accountAddress, gas })
-
-  if (gasEstimate == gas) {
-    throw new Error('Not enough enough gas, send more.')
-  }
-
-  return gatewayContract.methods
-    .withdrawERC20(amount.toString(), signature, MyRinkebyCoinJSON.networks[networkId].address)
-    .send({ from: accountAddress, gas: gasEstimate })
-
+  return gatewayContract.withdrawAsync(receipt, { gasLimit: gas })
 }
 
-async function withdrawEthFromRinkebyGateway({ web3js, amount, accountAddress, signature, gas }) {
+async function withdrawEthFromRinkebyGateway({ web3js, receipt, gas }) {
   const gatewayContract = await getRinkebyGatewayContract(web3js)
-
-  const gasEstimate = await gatewayContract.methods
-    .withdrawETH(amount.toString(), signature)
-    .estimateGas({ from: accountAddress, gas })
-
-  if (gasEstimate == gas) {
-    throw new Error('Not enough enough gas, send more.')
-  }
-
-  return gatewayContract.methods
-    .withdrawETH(amount.toString(), signature)
-    .send({ from: accountAddress, gas: gasEstimate })
-
+  return gatewayContract.withdrawAsync(receipt, { gasLimit: gas })
 }
 
-async function withdrawTokenFromRinkebyGateway({ web3js, tokenId, accountAddress, signature, gas }) {
+async function withdrawTokenFromRinkebyGateway({ web3js, receipt, gas }) {
   const gatewayContract = await getRinkebyGatewayContract(web3js)
-  const networkId = await web3js.eth.net.getId()
-
-  const gasEstimate = await gatewayContract.methods
-    .withdrawERC721(tokenId, signature, MyRinkebyTokenJSON.networks[networkId].address)
-    .estimateGas({ from: accountAddress, gas })
-
-  if (gasEstimate == gas) {
-    throw new Error('Not enough enough gas, send more.')
-  }
-
-  return gatewayContract.methods
-    .withdrawERC721(tokenId, signature, MyRinkebyTokenJSON.networks[networkId].address)
-    .send({ from: accountAddress, gas: gasEstimate })
+  return gatewayContract.withdrawAsync(receipt, { gasLimit: gas })
 }
 
 function loadRinkebyAccount() {
   const privateKey = fs.readFileSync(path.join(__dirname, './rinkeby_private_key'), 'utf-8')
-  const web3js = new Web3(`https://rinkeby.infura.io/${process.env.INFURA_API_KEY}`)
+  const web3js = new Web3(`https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`)
   const ownerAccount = web3js.eth.accounts.privateKeyToAccount('0x' + privateKey)
   web3js.eth.accounts.wallet.add(ownerAccount)
   return { account: ownerAccount, web3js }
@@ -566,7 +516,7 @@ program
       const actualAmount = new BN(amount).mul(coinMultiplier)
       const rinkebyNetworkId = await rinkeby.web3js.eth.net.getId()
       const extdevNetworkId = await extdev.web3js.eth.net.getId()
-      const signature = await depositCoinToExtdevGateway({
+      const receipt = await depositCoinToExtdevGateway({
         client: extdev.client,
         web3js: extdev.web3js,
         amount: actualAmount,
@@ -578,9 +528,7 @@ program
       })
       const tx = await withdrawCoinFromRinkebyGateway({
         web3js: rinkeby.web3js,
-        amount: actualAmount,
-        accountAddress: rinkeby.account.address,
-        signature,
+        receipt,
         gas: options.gas || 350000
       })
       console.log(`${amount} tokens withdrawn from Ethereum Gateway.`)
@@ -614,7 +562,7 @@ program
 
       const actualAmount = new BN(rinkeby.web3js.utils.toWei(amount, unit))
 
-      const signature = await depositEthToExtdevGateway({
+      const receipt = await depositEthToExtdevGateway({
         client: client,
         amount: actualAmount,
         ownerExtdevAddress: extdev.account,
@@ -623,9 +571,7 @@ program
       })
       const tx = await withdrawEthFromRinkebyGateway({
         web3js: rinkeby.web3js,
-        amount: actualAmount,
-        accountAddress: rinkeby.account.address,
-        signature,
+        receipt,
         gas: options.gas || 350000
       })
       amountInEth = actualAmount.div(new BN(10).pow(new BN(18))).toString()
@@ -654,7 +600,7 @@ program
 
       const rinkebyNetworkId = await rinkeby.web3js.eth.net.getId()
       const extdevNetworkId = await extdev.web3js.eth.net.getId()
-      const signature = await depositTokenToExtdevGateway({
+      const receipt = await depositTokenToExtdevGateway({
         client: extdev.client,
         web3js: extdev.web3js,
         tokenId: uid,
@@ -667,9 +613,7 @@ program
       console.log(`Token ${uid} deposited to DAppChain Gateway...`)
       const tx = await withdrawTokenFromRinkebyGateway({
         web3js: rinkeby.web3js,
-        tokenId: uid,
-        accountAddress: rinkeby.account.address,
-        signature,
+        receipt,
         gas: options.gas || 350000
       })
       console.log(`Token ${uid} withdrawn from Ethereum Gateway.`)
@@ -699,14 +643,11 @@ program
       const myRinkebyTokenAddress = Address.fromString(`eth:${MyRinkebyTokenJSON.networks[networkId].address}`)
       const myRinkebyGatewayAddress = Address.fromString(`eth:${rinkebyGatewayAddress}`)
       const receipt = await getPendingWithdrawalReceipt(extdev.client, extdev.account)
-      const signature = CryptoUtils.bytesToHexAddr(receipt.oracleSignature)
 
       if (receipt.tokenContract.toString() === myRinkebyCoinAddress.toString()) {
         const tx = await withdrawCoinFromRinkebyGateway({
           web3js: rinkeby.web3js,
-          amount: receipt.tokenAmount,
-          accountAddress: rinkeby.account.address,
-          signature,
+          receipt,
           gas: options.gas || 350000
         })
         console.log(`${receipt.tokenAmount.div(coinMultiplier).toString()} tokens withdrawn from Etheruem Gateway.`)
@@ -714,9 +655,7 @@ program
       } else if(receipt.tokenContract.toString() === myRinkebyTokenAddress.toString()){
         const tx = await withdrawTokenFromRinkebyGateway({
           web3js: rinkeby.web3js,
-          tokenId: receipt.tokenId,
-          accountAddress: rinkeby.account.address,
-          signature,
+          receipt,
           gas: options.gas || 350000
         })
         console.log(`Token ${receipt.tokenId.toString()} withdrawn from Ethereum Gateway.`)
@@ -724,9 +663,7 @@ program
       } else if(receipt.tokenContract.toString() === myRinkebyGatewayAddress.toString()) {
         const tx = await withdrawEthFromRinkebyGateway({
           web3js: rinkeby.web3js,
-          amount: receipt.tokenAmount,
-          accountAddress: rinkeby.account.address,
-          signature,
+          receipt,
           gas: options.gas || 350000
         })
         let amountInWei = new BN(receipt.tokenAmount)
