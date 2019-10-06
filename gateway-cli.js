@@ -236,9 +236,14 @@ async function depositCoinToExtdevGateway({
   const gatewayContract = await TransferGateway.createAsync(client, ownerExtdevAddr)
 
   const coinContract = await getExtdevCoinContract(web3js)
-  await coinContract.methods
-    .approve(extdevGatewayAddress.toLowerCase(), amount.toString())
-    .send({ from: ownerExtdevAddress })
+  try {
+    await coinContract.methods
+      .approve(extdevGatewayAddress.toLowerCase(), amount.toString())
+      .send({ from: ownerExtdevAddress })
+  } catch (err) {
+    console.error('Withdraw failed while trying to approve token transfer to DAppChain Gateway.')
+    throw err
+  }
 
   const ownerRinkebyAddr = Address.fromString(`eth:${ownerRinkebyAddress}`)
   const receiveSignedWithdrawalEvent = new Promise((resolve, reject) => {
@@ -262,8 +267,13 @@ async function depositCoinToExtdevGateway({
   })
 
   const tokenExtdevAddr = Address.fromString(`${client.chainId}:${tokenExtdevAddress}`)
-  await gatewayContract.withdrawERC20Async(amount, tokenExtdevAddr, ownerRinkebyAddr)
-  console.log(`${amount.div(coinMultiplier).toString()} tokens deposited to DAppChain Gateway...`)
+  try {
+    await gatewayContract.withdrawERC20Async(amount, tokenExtdevAddr, ownerRinkebyAddr)
+    console.log(`${amount.div(coinMultiplier).toString()} tokens deposited to DAppChain Gateway...`)
+  } catch (err) {
+    console.error('Withdraw failed while trying to deposit tokens to DAppChain Gateway.')
+    throw err
+  }
 
   await receiveSignedWithdrawalEvent
   return gatewayContract.withdrawalReceiptAsync(ownerExtdevAddr)
@@ -362,7 +372,24 @@ async function getPendingWithdrawalReceipt(client, ownerAddress) {
 }
 
 async function getRinkebyGatewayContract(web3js, web3Account) {
+  const networkId = await web3js.eth.net.getId()
+  
+  let version
+  switch (networkId) {
+    case 1: // Ethereum Mainnet
+      version = 1
+      break
+
+    case 4: // Rinkeby
+      version = 2
+      break
+  
+    default:
+      throw new Error('Ethereum Gateway is not deployed on network ' + networkId)
+  }
+
   return createEthereumGatewayAsync(
+    version,
     rinkebyGatewayAddress,
     new ethers.Wallet(web3Account.privateKey, new ethers.providers.Web3Provider(web3js.currentProvider))
   )
