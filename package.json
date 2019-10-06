@@ -27,12 +27,13 @@
     "ethereumjs-tx": "^1.3.7",
     "ethereumjs-wallet": "^0.6.2",
     "js-sha256": "^0.9.0",
-    "loom-js": "1.38.0",
+    "loom-js": "1.70.0",
     "loom-truffle-provider": "^0.11.0",
     "openzeppelin-solidity": "^1.12.0",
     "truffle": "^5.0.1",
     "truffle-hdwallet-provider": "^1.0.2",
-    "truffle-privatekey-provider": "^1.3.0"
+    "truffle-privatekey-provider": "^1.3.0",
+    "web3": "1.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.46",
@@ -47,7 +48,6 @@
     "react-router-dom": "^4.3.1",
     "regenerator-runtime": "^0.11.1",
     "request-promise": "^4.2.2",
-    "web3": "^1.0.0-beta.34",
     "webpack": "4.19.1",
     "webpack-cli": "^2.1.4",
     "webpack-dev-server": "^3.1.4"
