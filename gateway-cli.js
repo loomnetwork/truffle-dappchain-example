@@ -58,11 +58,11 @@ async function getRinkebyEthBalance(web3js, accountAddress) {
 async function depositCoinToRinkebyGateway(web3js, amount, ownerAccount, gas) {
   const contract = await getRinkebyCoinContract(web3js)
   const contractAddress = await getRinkebyCoinContractAddress(web3js)
-  const gateway  = await getRinkebyGatewayContract(web3js)
+  const gateway  = await getRinkebyGatewayContract(web3js, ownerAccount)
 
   let gasEstimate = await contract.methods
     .approve(rinkebyGatewayAddress, amount.toString())
-    .estimateGas({ from: ownerAccount })
+    .estimateGas({ from: ownerAccount.address })
 
   if (gasEstimate == gas) {
     throw new Error('Not enough enough gas, send more.')
@@ -70,9 +70,10 @@ async function depositCoinToRinkebyGateway(web3js, amount, ownerAccount, gas) {
 
   await contract.methods
     .approve(rinkebyGatewayAddress, amount.toString())
-    .send({ from: ownerAccount, gas: gasEstimate })
+    .send({ from: ownerAccount.address, gas: gasEstimate })
   
-  return gateway.depositERC20Async(amount, contractAddress, { gasLimit: gas })
+  const tx = await gateway.depositERC20Async(amount, contractAddress, { gasLimit: gas })
+  return tx.hash
 }
 
 async function depositEthToRinkebyGateway(web3js, amount, unit, ownerAccount) {
@@ -471,11 +472,11 @@ program
     const { account, web3js } = loadRinkebyAccount()
     try {
       const actualAmount = new BN(amount).mul(coinMultiplier)
-      const tx = await depositCoinToRinkebyGateway(
-        web3js, actualAmount, account.address, options.gas || 350000
+      const txHash = await depositCoinToRinkebyGateway(
+        web3js, actualAmount, account, options.gas || 350000
       )
       console.log(`${amount} tokens deposited to Ethereum Gateway.`)
-      console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
+      console.log(`Rinkeby tx hash: ${txHash}`)
     } catch (err) {
       console.error(err)
     }
