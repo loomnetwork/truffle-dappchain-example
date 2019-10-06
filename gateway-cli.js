@@ -360,26 +360,29 @@ async function getPendingWithdrawalReceipt(client, ownerAddress) {
   return gatewayContract.withdrawalReceiptAsync(ownerAddr)
 }
 
-async function getRinkebyGatewayContract(web3js) {
+async function getRinkebyGatewayContract(web3js, web3Account) {
   return createEthereumGatewayAsync(
     rinkebyGatewayAddress,
-    new ethers.providers.Web3Provider(web3js.currentProvider)
+    new ethers.Wallet(web3Account.privateKey, new ethers.providers.Web3Provider(web3js.currentProvider))
   )
 }
 
-async function withdrawCoinFromRinkebyGateway({ web3js, receipt, gas }) {
-  const gatewayContract = await getRinkebyGatewayContract(web3js)
-  return gatewayContract.withdrawAsync(receipt, { gasLimit: gas })
+async function withdrawCoinFromRinkebyGateway({ web3js, web3Account, receipt, gas }) {
+  const gatewayContract = await getRinkebyGatewayContract(web3js, web3Account)
+  const tx = await gatewayContract.withdrawAsync(receipt, { gasLimit: gas })
+  return tx.hash
 }
 
-async function withdrawEthFromRinkebyGateway({ web3js, receipt, gas }) {
-  const gatewayContract = await getRinkebyGatewayContract(web3js)
-  return gatewayContract.withdrawAsync(receipt, { gasLimit: gas })
+async function withdrawEthFromRinkebyGateway({ web3js, web3Account, receipt, gas }) {
+  const gatewayContract = await getRinkebyGatewayContract(web3js, web3Account)
+  const tx = await gatewayContract.withdrawAsync(receipt, { gasLimit: gas })
+  return tx.hash
 }
 
-async function withdrawTokenFromRinkebyGateway({ web3js, receipt, gas }) {
-  const gatewayContract = await getRinkebyGatewayContract(web3js)
-  return gatewayContract.withdrawAsync(receipt, { gasLimit: gas })
+async function withdrawTokenFromRinkebyGateway({ web3js, web3Account, receipt, gas }) {
+  const gatewayContract = await getRinkebyGatewayContract(web3js, web3Account)
+  const tx = await gatewayContract.withdrawAsync(receipt, { gasLimit: gas })
+  return tx.hash
 }
 
 function loadRinkebyAccount() {
@@ -494,8 +497,7 @@ program
         web3js, amount, unit, account
       )
       console.log(`${amount} ${unit} eth deposited to Ethereum Gateway.`)
-      console.log(`Rinkeby tx: `)
-      console.log(tx)
+      console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
     } catch (err) {
       console.error(err)
     }
@@ -526,13 +528,14 @@ program
         tokenRinkebyAddress: MyRinkebyCoinJSON.networks[rinkebyNetworkId].address,
         timeout: options.timeout ? (options.timeout * 1000) : 120000
       })
-      const tx = await withdrawCoinFromRinkebyGateway({
+      const txHash = await withdrawCoinFromRinkebyGateway({
         web3js: rinkeby.web3js,
+        web3Account: rinkeby.account,
         receipt,
         gas: options.gas || 350000
       })
       console.log(`${amount} tokens withdrawn from Ethereum Gateway.`)
-      console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
+      console.log(`Rinkeby tx hash: ${txHash}`)
     } catch (err) {
       console.error(err)
     } finally {
@@ -544,7 +547,7 @@ program
 
 program
   .command('withdraw-eth <amount>')
-  .description('withdraw the specified amount of  eth via the Transfer Gateway')
+  .description('withdraw the specified amount of ETH via the Transfer Gateway')
   .option("-g, --gas <number>", "Gas for the tx")
   .option("-u, --unit <ethUnit>", "eth unit")
   .option("--timeout <number>", "Number of seconds to wait for withdrawal to be processed")
@@ -569,14 +572,15 @@ program
         ownerRinkebyAddress: rinkeby.account.address,
         timeout: options.timeout ? (options.timeout * 1000) : 120000
       })
-      const tx = await withdrawEthFromRinkebyGateway({
+      const txHash = await withdrawEthFromRinkebyGateway({
         web3js: rinkeby.web3js,
+        web3Account: rinkeby.account,
         receipt,
         gas: options.gas || 350000
       })
       amountInEth = actualAmount.div(new BN(10).pow(new BN(18))).toString()
       console.log(`${actualAmount.toString()} wei (${amountInEth} in eth) withdrawn from Ethereum Gateway.`)
-      console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
+      console.log(`Rinkeby tx hash: ${txHash}`)
     } catch (err) {
       console.error(err)
     } finally {
@@ -611,13 +615,14 @@ program
         timeout: options.timeout ? (options.timeout * 1000) : 120000
       })
       console.log(`Token ${uid} deposited to DAppChain Gateway...`)
-      const tx = await withdrawTokenFromRinkebyGateway({
+      const txHash = await withdrawTokenFromRinkebyGateway({
         web3js: rinkeby.web3js,
+        web3Account: rinkeby.account,
         receipt,
         gas: options.gas || 350000
       })
       console.log(`Token ${uid} withdrawn from Ethereum Gateway.`)
-      console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
+      console.log(`Rinkeby tx hash: ${txHash}`)
     } catch (err) {
       console.error(err)
     } finally {
@@ -645,31 +650,37 @@ program
       const receipt = await getPendingWithdrawalReceipt(extdev.client, extdev.account)
 
       if (receipt.tokenContract.toString() === myRinkebyCoinAddress.toString()) {
-        const tx = await withdrawCoinFromRinkebyGateway({
+        console.log(`Found pending withdrawal of ${receipt.tokenAmount.div(coinMultiplier).toString()} coins.`)
+        const txHash = await withdrawCoinFromRinkebyGateway({
           web3js: rinkeby.web3js,
+          web3Account: rinkeby.account,
           receipt,
           gas: options.gas || 350000
         })
         console.log(`${receipt.tokenAmount.div(coinMultiplier).toString()} tokens withdrawn from Etheruem Gateway.`)
-        console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
-      } else if(receipt.tokenContract.toString() === myRinkebyTokenAddress.toString()){
-        const tx = await withdrawTokenFromRinkebyGateway({
+        console.log(`Rinkeby tx hash: ${txHash}`)
+      } else if (receipt.tokenContract.toString() === myRinkebyTokenAddress.toString()){
+        console.log(`Found pending withdrawal of token ${receipt.tokenId.toString()}.`)
+        const txHash = await withdrawTokenFromRinkebyGateway({
           web3js: rinkeby.web3js,
+          web3Account: rinkeby.account,
           receipt,
           gas: options.gas || 350000
         })
         console.log(`Token ${receipt.tokenId.toString()} withdrawn from Ethereum Gateway.`)
-        console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
-      } else if(receipt.tokenContract.toString() === myRinkebyGatewayAddress.toString()) {
-        const tx = await withdrawEthFromRinkebyGateway({
+        console.log(`Rinkeby tx hash: ${txHash}`)
+      } else if (receipt.tokenContract.toString() === myRinkebyGatewayAddress.toString()) {
+        console.log(`Found pending withdrawal of ${amountInEth.toString()} ETH.`)
+        const txHash = await withdrawEthFromRinkebyGateway({
           web3js: rinkeby.web3js,
+          web3Account: rinkeby.account,
           receipt,
           gas: options.gas || 350000
         })
         let amountInWei = new BN(receipt.tokenAmount)
         let amountInEth = amountInWei.div(new BN(10).pow(new BN(18)))
         console.log(`${amountInWei.toString()} wei (${amountInEth.toString()} in eth) withdrawn from Etheruem Gateway.`)
-        console.log(`Rinkeby tx hash: ${tx.transactionHash}`)
+        console.log(`Rinkeby tx hash: ${txHash}`)
       } else {
         console.log("Unsupported asset type!")
       }
