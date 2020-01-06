@@ -15,8 +15,8 @@
     "serve:extdev": "NETWORK=extdev yarn run serve",
     "gen:rinkeby-key": "node ./scripts/gen-eth-key.js rinkeby",
     "get:loom": "if [ ! -d loom ]; then mkdir loom && cd loom && curl https://raw.githubusercontent.com/loomnetwork/loom-sdk-documentation/master/scripts/get_loom.sh | sh && chmod +x ./loom && cd ..; fi",
-    "gen:extdev-key": "npm run get:loom && ./loom/loom genkey -k extdev_private_key -a extdev_public_key",
-    "gen:loom-key": "npm run get:loom && ./loom/loom genkey -k loom_private_key -a loom_public_key",
+    "gen:extdev-key": "node scripts/gen-loom-key.js extdev_private_key",
+    "gen:loom-key": "node scripts/gen-loom-key.js loom_private_key",
     "loom:init": "cd loom && chmod +x loom && ./loom init -f && cd ..",
     "loom:run": "cd loom && ./loom run && cd .."
   },
