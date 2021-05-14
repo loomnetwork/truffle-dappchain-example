@@ -1,12 +1,12 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.8.0;
 
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721Full.sol";
+import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 
-contract MyToken is ERC721Full {
+contract MyToken is ERC721 {
     // Transfer Gateway contract address
     address public gateway;
 
-    constructor (address _gateway) ERC721Full("MyToken", "MTC") public {
+    constructor (address _gateway) ERC721("MyToken", "MTC") {
         gateway = _gateway;
     }
 
