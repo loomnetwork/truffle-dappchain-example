@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.8.0;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
@@ -6,11 +6,7 @@ contract MyCoin is ERC20 {
     // Transfer Gateway contract address
     address public gateway;
 
-    string public name = "MyCoin";
-    string public symbol = "MCC";
-    uint8 public decimals = 18;
-    
-    constructor (address _gateway) public {
+    constructor (address _gateway) ERC20("MyCoin", "MCC") {
         gateway = _gateway;
     }
 

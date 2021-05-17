@@ -28,10 +28,15 @@ module.exports = {
   contracts_build_directory: join(__dirname, './src/contracts'),
   compilers: {
     solc: {
-      version: '0.5.0'
+      version: '0.8.0'
     }
   },
   networks: {
+    development: {
+      host: "127.0.0.1",
+      port: 8545,
+      network_id: "*"
+    },
     loom_dapp_chain: {
       provider: function () {
         const chainId = 'default'
@@ -50,7 +55,8 @@ module.exports = {
           throw new Error(EXPECTING_FILE_ERROR)
         }
       },
-      network_id: '*'
+      network_id: '*',
+      port: 8545
     },
     loomv2b: {
       provider: function () {
@@ -82,7 +88,7 @@ module.exports = {
           const loomTruffleProvider = getLoomProviderWithPrivateKey(privateKeyPath, chainId, writeUrl, readUrl)
           // use a dummy mnemonic to create a bunch of accounts we'll use for testing purposes
           loomTruffleProvider.createExtraAccountsFromMnemonic("gravity top burden flip student usage spell purchase hundred improve check genre", 10)
-
+          
           return loomTruffleProvider
         } else if (fs.existsSync(mnemonicPath)) {
           const loomTruffleProvider = getLoomProviderWithMnemonic(mnemonicPath, chainId, writeUrl, readUrl)
